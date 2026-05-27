@@ -18,7 +18,7 @@ type Share struct {
 	IsLAN             bool
 	FileCount         int
 	TotalSize         int64
-	Password          string
+	PasswordHash      string
 	Note              string
 	Downloads         int
 	CreatedAt         time.Time
@@ -33,7 +33,6 @@ type CreateResp struct {
 	PublicBaseURL    string `json:"public_base_url"`
 	IsInternet       bool   `json:"is_internet"`
 	IsLAN            bool   `json:"is_lan"`
-	Password         string `json:"password,omitempty"`
 	Note             string `json:"note,omitempty"`
 }
 

@@ -21,6 +21,72 @@ var (
 	CumulativeBytes   = map[string]int64{} // key: token + "_" + ip
 )
 
+type FailedAttempt struct {
+	Count        int
+	BlockedUntil time.Time
+	LastAttempt  time.Time
+}
+
+var (
+	FailedAttempts   = map[string]*FailedAttempt{}
+	FailedAttemptsMu sync.Mutex
+)
+
+func IsBlocked(token string, ip string) bool {
+	key := token + "_" + ip
+
+	FailedAttemptsMu.Lock()
+	defer FailedAttemptsMu.Unlock()
+
+	attempt, exists := FailedAttempts[key]
+
+	if !exists {
+		return false
+	}
+
+	// Block expired
+	if time.Now().After(attempt.BlockedUntil) {
+		delete(FailedAttempts, key)
+		return false
+	}
+
+	return attempt.BlockedUntil.After(time.Now())
+}
+
+func RegisterFailedAttempt(token string, ip string) {
+	key := token + "_" + ip
+
+	FailedAttemptsMu.Lock()
+	defer FailedAttemptsMu.Unlock()
+
+	attempt, exists := FailedAttempts[key]
+
+	if !exists {
+		FailedAttempts[key] = &FailedAttempt{
+			Count:       1,
+			LastAttempt: time.Now(),
+		}
+		return
+	}
+
+	attempt.Count++
+	attempt.LastAttempt = time.Now()
+
+	// Block after 3 failures (as requested by user)
+	if attempt.Count >= 3 {
+		attempt.BlockedUntil = time.Now().Add(5 * time.Minute)
+	}
+}
+
+func ClearFailedAttempts(token string, ip string) {
+	key := token + "_" + ip
+
+	FailedAttemptsMu.Lock()
+	defer FailedAttemptsMu.Unlock()
+
+	delete(FailedAttempts, key)
+}
+
 func generateToken() string {
 	bytes := make([]byte, 16)
 	_, err := rand.Read(bytes)
@@ -73,7 +139,7 @@ func Create(paths []string, label string, publicBaseURL string, localBaseURL str
 		FileCount:         len(paths),
 		TotalSize:         totalSize,
 		PrimaryName:       primaryName,
-		Password:          password,
+		PasswordHash:      password,
 		Note:              note,
 	}
 

@@ -1,13 +1,18 @@
 package handlers
 
 import (
+	"backend-app/config"
 	"backend-app/internal/share"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"html/template"
 	"net"
 	"net/http"
 	"strings"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type progressWriter struct {
@@ -16,6 +21,20 @@ type progressWriter struct {
 	sessionID string
 	lastTime  time.Time
 	lastBytes int64
+}
+
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword(
+		[]byte(password),
+		bcrypt.DefaultCost,
+	)
+
+	return string(bytes), err
+}
+
+func generateAuthCookie(token string, passwordHash string) string {
+	hash := sha256.Sum256([]byte(token + passwordHash + config.SecretKey))
+	return hex.EncodeToString(hash[:])
 }
 
 func (pw *progressWriter) Header() http.Header {
