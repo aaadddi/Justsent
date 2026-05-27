@@ -108,8 +108,8 @@ export default function FileCard({
 
   // Determine state based on properties
   const isPreparing = file.shareCreating;
-  const isUploading = file.isDownloading;
   const isSharing = file.isSharing && (!!file.shareLink || !!file.localShareLink);
+  const isUploading = isSharing && file.isDownloading;
   const isReady = !isSharing && !isPreparing;
 
   const activeDownloads = (file.activeDownloads && file.activeDownloads.length > 0)

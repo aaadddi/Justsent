@@ -94,8 +94,8 @@ function App() {
             const token = file.shareLink
               ? file.shareLink.split("/").pop()
               : file.localShareLink
-              ? file.localShareLink.split("/").pop()
-              : null;
+                ? file.localShareLink.split("/").pop()
+                : null;
             const statsList = token ? transfers[token] : null;
 
             const isDownloading = !!statsList && statsList.length > 0;
@@ -238,10 +238,10 @@ function App() {
         files.map((f) =>
           f.id === id
             ? {
-                ...f,
-                shareError:
-                  "Each file needs a full path. Use drag-and-drop into the window (or Tauri file dialog with paths) so the server can read the file.",
-              }
+              ...f,
+              shareError:
+                "Each file needs a full path. Use drag-and-drop into the window (or Tauri file dialog with paths) so the server can read the file.",
+            }
             : f
         )
       );
@@ -265,11 +265,11 @@ function App() {
         files.map((f) =>
           f.id === id
             ? {
-                ...f,
-                shareLink: file.shareInternet ? res.download_url : null,
-                localShareLink: file.shareNearby ? res.local_download_url : null,
-                isSharing: true,
-              }
+              ...f,
+              shareLink: file.shareInternet ? res.download_url : null,
+              localShareLink: file.shareNearby ? res.local_download_url : null,
+              isSharing: true,
+            }
             : f
         )
       );
@@ -279,12 +279,12 @@ function App() {
         files.map((f) =>
           f.id === id
             ? {
-                ...f,
-                isSharing: false,
-                shareLink: null,
-                localShareLink: null,
-                shareError: e instanceof Error ? e.message : "Could not create share",
-              }
+              ...f,
+              isSharing: false,
+              shareLink: null,
+              localShareLink: null,
+              shareError: e instanceof Error ? e.message : "Could not create share",
+            }
             : f
         )
       );
@@ -312,13 +312,17 @@ function App() {
       files.map((f) =>
         f.id === id
           ? {
-              ...f,
-              isSharing: false,
-              shareLink: null,
-              localShareLink: null,
-              isActionsOpen: false,
-              isCompleted: false,
-            }
+            ...f,
+            isSharing: false,
+            shareLink: null,
+            localShareLink: null,
+            isActionsOpen: false,
+            isCompleted: false,
+            isDownloading: false,
+            activeDownloads: [],
+            speed: undefined,
+            bytesWritten: undefined,
+          }
           : f
       )
     );

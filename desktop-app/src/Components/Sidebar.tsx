@@ -59,7 +59,7 @@ export default function Sidebar({ currentTab, setCurrentTab, toggleTheme }: Side
               </svg>
             }
           />
-          <SidebarItem
+          {/* <SidebarItem
             label="Devices"
             active={currentTab === "devices"}
             onClick={() => setCurrentTab("devices")}
@@ -70,7 +70,7 @@ export default function Sidebar({ currentTab, setCurrentTab, toggleTheme }: Side
                 <line x1="12" y1="17" x2="12" y2="21" />
               </svg>
             }
-          />
+          /> */}
         </SidebarSection>
       </div>
 

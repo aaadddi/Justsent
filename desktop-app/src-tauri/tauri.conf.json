@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": {
       "cwd": "..",
-      "script": "bunx concurrently -k \"bun run dev\" \"cd ../backend2 && go run main.go\""
+      "script": "bunx concurrently -k \"bun run dev\" \"cd ../backend && go run main.go\""
     },
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": {
