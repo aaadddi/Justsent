@@ -5,6 +5,7 @@ import "runtime"
 const (
 	ServerHost = "localhost"
 	ServerPort = "8787"
+	SecretKey  = "HeHeHe"
 )
 
 func CloudflaredPath() string {

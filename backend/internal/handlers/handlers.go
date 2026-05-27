@@ -7,6 +7,7 @@ import (
 	"backend-app/internal/tunnel"
 	"backend-app/internal/types"
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,6 +16,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func HandleHealth(w http.ResponseWriter, r *http.Request) {
@@ -63,6 +66,15 @@ func HandleShares(w http.ResponseWriter, r *http.Request) {
 		localIP := GetLocalIP()
 		localBaseURL := fmt.Sprintf("http://%s:%s", localIP, config.ServerPort)
 
+		if req.Password != "" {
+			hashed, err := HashPassword(req.Password)
+			if err != nil {
+				http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+				return
+			}
+			req.Password = hashed
+		}
+
 		s, err := share.Create(req.Paths, req.Label, baseURL, localBaseURL, req.Password, req.Note, req.IsInternet, req.IsLAN)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -78,9 +90,7 @@ func HandleShares(w http.ResponseWriter, r *http.Request) {
 
 			IsInternet: s.IsInternet,
 			IsLAN:      s.IsLAN,
-
-			Password: s.Password,
-			Note:     s.Note,
+			Note:       s.Note,
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -262,19 +272,47 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if share.IsBlocked(token, clientIP) {
+		http.Error(w, "Too many failed attempts. Try again later.", http.StatusTooManyRequests)
+		return
+	}
+
 	// Verify password authentication
 	isAuthenticated := false
-	if s.Password == "" {
+	if s.PasswordHash == "" {
 		isAuthenticated = true
 	} else {
 		// 1. Check query parameter
-		if r.URL.Query().Get("pwd") == s.Password {
-			isAuthenticated = true
-		} else {
-			// 2. Check cookie
-			cookie, err := r.Cookie("justsent_auth_" + token)
-			if err == nil && cookie.Value == "1" {
+		pwdParam := r.URL.Query().Get("pwd")
+		if pwdParam != "" {
+			if bcrypt.CompareHashAndPassword([]byte(s.PasswordHash), []byte(pwdParam)) == nil {
 				isAuthenticated = true
+				share.ClearFailedAttempts(token, clientIP)
+				cookieValue := generateAuthCookie(token, s.PasswordHash)
+
+				http.SetCookie(w, &http.Cookie{
+					Name:     "justsent_auth_" + token,
+					Value:    cookieValue,
+					Path:     "/",
+					HttpOnly: true,
+					Secure:   true,
+					SameSite: http.SameSiteLaxMode,
+					Expires:  time.Now().Add(24 * time.Hour),
+				})
+			} else {
+				share.RegisterFailedAttempt(token, clientIP)
+			}
+		}
+
+		// 2. Check auth cookie
+		if !isAuthenticated {
+			cookie, err := r.Cookie("justsent_auth_" + token)
+			if err == nil {
+				expected := generateAuthCookie(token, s.PasswordHash)
+				if subtle.ConstantTimeCompare([]byte(cookie.Value), []byte(expected)) == 1 {
+					isAuthenticated = true
+					share.ClearFailedAttempts(token, clientIP)
+				}
 			}
 		}
 	}
@@ -293,14 +331,16 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 			}
 
 			pwd := r.FormValue("password")
-			if pwd == s.Password {
+			if bcrypt.CompareHashAndPassword([]byte(s.PasswordHash), []byte(pwd)) == nil {
+				share.ClearFailedAttempts(token, clientIP)
 				http.SetCookie(w, &http.Cookie{
 					Name:     "justsent_auth_" + token,
-					Value:    "1",
+					Value:    generateAuthCookie(token, s.PasswordHash),
 					Path:     "/",
 					HttpOnly: true,
 					SameSite: http.SameSiteLaxMode,
-					MaxAge:   86400, // 24 hours
+					Secure:   true,
+					Expires:  time.Now().Add(24 * time.Hour),
 				})
 				json.NewEncoder(w).Encode(map[string]interface{}{
 					"success": true,
@@ -308,6 +348,7 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			share.RegisterFailedAttempt(token, clientIP)
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]interface{}{
 				"success": false,
