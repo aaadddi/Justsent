@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { formatFileSize, getExtension } from "../utils/fileFormatting";
-import type { ShareListItem } from "../lib/backend";
+import { checkFiles, deleteShareHistory, type ShareListItem } from "../lib/backend";
 
 type HistoryViewProps = {
   items: ShareListItem[];
   loading?: boolean;
+  onReShare: (paths: string[]) => void;
+  onRefresh: () => void;
 };
 
 const getExtClass = (name: string = "") => {
@@ -17,29 +19,56 @@ const getExtClass = (name: string = "") => {
   return "ext-default";
 };
 
-export default function HistoryView({ items, loading }: HistoryViewProps) {
+export default function HistoryView({ items, loading, onReShare, onRefresh }: HistoryViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [expandedShares, setExpandedShares] = useState<Record<string, boolean>>({});
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleCopyLink = async (id: number, url: string) => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 1500);
-    } catch (err) {
-      console.error("Failed to copy link:", err);
+  const handleDeleteHistory = async (token: string) => {
+    if (window.confirm("Are you sure you want to delete this share from history?")) {
+      try {
+        await deleteShareHistory(token);
+        onRefresh();
+      } catch (err) {
+        console.error("Failed to delete history:", err);
+      }
     }
   };
 
-  const getDownloadCount = (id: number) => {
-    const counts = [3, 7, 3, 1, 5];
-    const count = counts[id % counts.length];
+  const toggleExpand = (token: string) => {
+    setExpandedShares((prev) => ({
+      ...prev,
+      [token]: !prev[token],
+    }));
+  };
+
+  const handleReShare = async (item: ShareListItem) => {
+    try {
+      const res = await checkFiles(item.file_paths);
+      if (res.exists) {
+        onReShare(item.file_paths);
+      } else {
+        setErrorMessage(
+          `The original file(s) are no longer available at their path(s):\n${res.missing.map((m) => `• ${m}`).join("\n")}`
+        );
+      }
+    } catch (err) {
+      console.error("Failed to check files:", err);
+      // Fallback: try sharing anyway
+      onReShare(item.file_paths);
+    }
+  };
+
+  const getDownloadCount = (count: number) => {
     return `${count} download${count !== 1 ? "s" : ""}`;
   };
 
-  const getExpireTime = (id: number) => {
-    const times = ["24h", "24h", "24h", "24h", "24h"];
-    return times[id % times.length];
+  const getExpireTime = (expiresAt?: string | null) => {
+    if (!expiresAt) return "No limit";
+    const diff = new Date(expiresAt).getTime() - Date.now();
+    if (diff <= 0) return "Expired";
+    const hours = Math.ceil(diff / (1000 * 60 * 60));
+    return `${hours}h left`;
   };
 
   const formatTime = (iso: string) => {
@@ -49,17 +78,30 @@ export default function HistoryView({ items, loading }: HistoryViewProps) {
     const minutes = date.getMinutes();
     const ampm = hours >= 12 ? "PM" : "AM";
     hours = hours % 12;
-    hours = hours ? hours : 12; // the hour '0' should be '12'
+    hours = hours ? hours : 12;
     const strMinutes = minutes < 10 ? "0" + minutes : minutes;
     return `${hours}:${strMinutes} ${ampm}`;
   };
 
-  const filteredItems = items.filter((item) =>
-    (item.primary_name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (item.label || "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const formatDownloadTime = (iso: string) => {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "Unknown time";
+    return date.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  };
 
-  // Group items by date
+  const filteredItems = items.filter((item) => {
+    const query = searchQuery.toLowerCase();
+    const matchesPrimary = (item.primary_name || "").toLowerCase().includes(query);
+    const matchesPaths = (item.file_paths || []).some(p => p.toLowerCase().includes(query));
+    return matchesPrimary || matchesPaths;
+  });
+
   const groupItems = () => {
     const today: ShareListItem[] = [];
     const yesterday: ShareListItem[] = [];
@@ -85,41 +127,110 @@ export default function HistoryView({ items, loading }: HistoryViewProps) {
 
   const { today, yesterday, older } = groupItems();
 
-  const renderItemRow = (item: ShareListItem) => (
-    <div className="history-item-row" key={item.id}>
-      <div className="history-name-col">
-        <div className={`file-visual ${getExtClass(item.primary_name)}`}>
-          {getExtension(item.primary_name) || "file"}
+  const renderItemRow = (item: ShareListItem) => {
+    const isExpanded = !!expandedShares[item.token];
+    return (
+      <div className="history-item-wrapper" key={item.id}>
+        <div className="history-item-row" onClick={() => toggleExpand(item.token)}>
+          <div className="history-name-col">
+            <div className={`file-visual ${getExtClass(item.primary_name)}`}>
+              {getExtension(item.primary_name) || "file"}
+            </div>
+            <div className="history-file-info">
+              <span className="history-file-name" title={item.primary_name}>
+                {item.primary_name}
+              </span>
+            </div>
+          </div>
+          <div className="history-size-col">{formatFileSize(item.total_size)}</div>
+          <div className="history-time-col">{formatTime(item.created_at)}</div>
+          <div className="history-expires-col">{getExpireTime(item.expires_at)}</div>
+          <div className="history-downloads-col">{getDownloadCount(Math.max(item.downloads || 0, item.download_history?.length || 0))}</div>
+          <div className="history-actions-col" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <button
+              className="history-share-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                void handleReShare(item);
+              }}
+              title="Add files back to transfers page for sharing"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px" }}>
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+              Share
+            </button>
+            <button
+              className={`history-toggle-btn ${isExpanded ? "expanded" : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleExpand(item.token);
+              }}
+              title={isExpanded ? "Hide details" : "Show details"}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="chevron-icon">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+          </div>
         </div>
-        <div className="history-file-info">
-          <span className="history-file-name" title={item.primary_name}>
-            {item.primary_name}
-          </span>
-        </div>
+        {isExpanded && (
+          <div className="history-expanded-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="history-expanded-section">
+              <h4 className="history-expanded-section-title">Files ({item.file_paths.length})</h4>
+              <ul className="history-paths-list">
+                {item.file_paths.map((path, idx) => (
+                  <li key={idx} title={path}>
+                    {path}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="history-expanded-section">
+              <h4 className="history-expanded-section-title">Downloads History Log</h4>
+              {item.download_history && item.download_history.length > 0 ? (
+                <table className="history-downloads-table">
+                  <thead>
+                    <tr>
+                      <th>Downloader IP</th>
+                      <th>Downloaded At</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {item.download_history.map((log, idx) => (
+                      <tr key={idx}>
+                        <td>{log.downloader_ip}</td>
+                        <td>{formatDownloadTime(log.downloaded_at)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="no-downloads-text">No downloads recorded yet for this share.</p>
+              )}
+            </div>
+            <div className="history-action-row">
+              <button
+                className="history-delete-history-btn"
+                onClick={() => void handleDeleteHistory(item.token)}
+                title="Completely delete this entry from your transfer history"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px" }}>
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  <line x1="10" y1="11" x2="10" y2="17" />
+                  <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
+                Delete History
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-      <div className="history-size-col">{formatFileSize(item.total_size)}</div>
-      <div className="history-time-col">{formatTime(item.created_at)}</div>
-      <div className="history-expires-col">{getExpireTime(item.id)}</div>
-      <div className="history-downloads-col">{getDownloadCount(item.id)}</div>
-      <div className="history-actions-col">
-        <button
-          className={`history-action-btn ${copiedId === item.id ? "copied" : ""}`}
-          onClick={() => void handleCopyLink(item.id, item.download_url)}
-          title={copiedId === item.id ? "Link copied!" : "Copy download link"}
-        >
-          {copiedId === item.id ? (
-            <span className="copied-text">Copied</span>
-          ) : (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-          )}
-        </button>
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="history-view-container">
@@ -133,24 +244,11 @@ export default function HistoryView({ items, loading }: HistoryViewProps) {
           <input
             type="text"
             className="history-search-input"
-            placeholder="Search transfers"
+            placeholder="Search transfers by name"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <button className="history-filter-btn" title="Filter settings">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="4" y1="21" x2="4" y2="14" />
-            <line x1="4" y1="10" x2="4" y2="3" />
-            <line x1="12" y1="21" x2="12" y2="12" />
-            <line x1="12" y1="8" x2="12" y2="3" />
-            <line x1="20" y1="21" x2="20" y2="16" />
-            <line x1="20" y1="12" x2="20" y2="3" />
-            <line x1="1" y1="14" x2="7" y2="14" />
-            <line x1="9" y1="8" x2="15" y2="8" />
-            <line x1="17" y1="16" x2="23" y2="16" />
-          </svg>
-        </button>
       </div>
 
       {/* History content list */}
@@ -159,7 +257,9 @@ export default function HistoryView({ items, loading }: HistoryViewProps) {
           <div className="history-empty-state">Loading transfers history…</div>
         )}
         {!loading && filteredItems.length === 0 && (
-          <div className="history-empty-state">No transfers found matching "{searchQuery}"</div>
+          <div className="history-empty-state">
+            {items.length === 0 ? "No history" : `No transfers found matching "${searchQuery}"`}
+          </div>
         )}
 
         {today.length > 0 && (
@@ -183,6 +283,31 @@ export default function HistoryView({ items, loading }: HistoryViewProps) {
           </div>
         )}
       </div>
+
+      {/* Error Dialog Modal overlay */}
+      {errorMessage && (
+        <div className="error-dialog-overlay" onClick={() => setErrorMessage(null)}>
+          <div className="error-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="error-dialog-header">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D32F2F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <h3>Original File Not Found</h3>
+            </div>
+            <div className="error-dialog-body">
+              <p>The original files are no longer available at their original paths. They might have been moved, renamed, or deleted:</p>
+              <pre className="error-paths-list">{errorMessage.split('\n').slice(1).join('\n')}</pre>
+            </div>
+            <div className="error-dialog-actions">
+              <button className="error-dialog-close-btn" onClick={() => setErrorMessage(null)}>
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

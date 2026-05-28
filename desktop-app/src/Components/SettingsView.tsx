@@ -1,14 +1,34 @@
 interface SettingsViewProps {
   themeSetting: "system" | "light" | "dark";
   onThemeChange: (setting: "system" | "light" | "dark") => void;
+  onClearHistory: () => Promise<void>;
 }
 
-export default function SettingsView({ themeSetting, onThemeChange }: SettingsViewProps) {
+export default function SettingsView({ themeSetting, onThemeChange, onClearHistory }: SettingsViewProps) {
+  const handleClearHistoryClick = async () => {
+    if (window.confirm("Are you sure you want to delete ALL sharing history and download logs? This action is permanent and cannot be undone.")) {
+      await onClearHistory();
+    }
+  };
+
+  const handleReportIssue = async () => {
+    if ("__TAURI_INTERNALS__" in window) {
+      try {
+        const { openUrl } = await import("@tauri-apps/plugin-opener");
+        await openUrl("https://github.com/aaadddi/sendra/issues");
+      } catch (err) {
+        console.error("Failed to open URL using Tauri:", err);
+        window.open("https://github.com/aaadddi/sendra/issues", "_blank");
+      }
+    } else {
+      window.open("https://github.com/aaadddi/sendra/issues", "_blank");
+    }
+  };
   return (
     <div className="settings-view-container">
       <div className="settings-section">
         <h3 className="settings-section-title">Appearance</h3>
-        <p className="settings-section-subtitle">Choose how JustSent looks on your device</p>
+        <p className="settings-section-subtitle">Choose how Justsent looks on your device</p>
         
         <div className="theme-options-grid">
           {/* System Theme Card */}
@@ -74,11 +94,51 @@ export default function SettingsView({ themeSetting, onThemeChange }: SettingsVi
       <div className="settings-panel-divider" style={{ margin: "24px 0" }} />
 
       <div className="settings-section">
+        <h3 className="settings-section-title" style={{ color: "#D32F2F" }}>Danger Zone</h3>
+        <p className="settings-section-subtitle">Permanently delete configurations and logs</p>
+        
+        <div className="danger-zone-card">
+          <div className="danger-zone-info">
+            <span className="danger-zone-title">Clear Sharing History</span>
+            <span className="danger-zone-desc">Remove all transfer records and download logs. This cannot be undone.</span>
+          </div>
+          <button
+            className="settings-clear-history-btn"
+            onClick={handleClearHistoryClick}
+          >
+            Clear History
+          </button>
+        </div>
+      </div>
+
+      <div className="settings-panel-divider" style={{ margin: "24px 0" }} />
+
+      <div className="settings-section">
+        <h3 className="settings-section-title">Support</h3>
+        <p className="settings-section-subtitle">Found a bug or have a feature request?</p>
+        
+        <div className="settings-card">
+          <div className="settings-card-info">
+            <span className="settings-card-title">Report Issue or Bug</span>
+            <span className="settings-card-desc">Submit bugs and view project issues on GitHub</span>
+          </div>
+          <button
+            className="settings-action-btn"
+            onClick={handleReportIssue}
+          >
+            Report Issue
+          </button>
+        </div>
+      </div>
+
+      <div className="settings-panel-divider" style={{ margin: "24px 0" }} />
+
+      <div className="settings-section">
         <h3 className="settings-section-title">About</h3>
         <div className="about-info-card">
           <div className="about-row">
             <span className="about-label">Application</span>
-            <span className="about-val">JustSent Desktop</span>
+            <span className="about-val">Justsent Desktop</span>
           </div>
           <div className="about-row">
             <span className="about-label">Version</span>

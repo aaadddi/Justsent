@@ -69,6 +69,11 @@ export async function createShare(body: CreateShareRequest): Promise<CreateShare
   };
 }
 
+export type DownloadHistoryItem = {
+  downloader_ip: string;
+  downloaded_at: string;
+};
+
 export type ShareListItem = {
   id: number;
   token: string;
@@ -82,6 +87,11 @@ export type ShareListItem = {
   recipient_summary?: string | null;
   password?: string;
   note?: string;
+  file_paths: string[];
+  downloads: number;
+  is_active: boolean;
+  expires_at?: string | null;
+  download_history?: DownloadHistoryItem[];
 };
 
 export async function listShares(): Promise<{ shares: ShareListItem[]; tunnelActive: boolean }> {
@@ -105,6 +115,11 @@ export async function listShares(): Promise<{ shares: ShareListItem[]; tunnelAct
     recipient_summary: item.recipient_summary !== undefined ? item.recipient_summary : item.RecipientSummary,
     password: item.password !== undefined ? item.password : item.Password,
     note: item.note !== undefined ? item.note : item.Note,
+    file_paths: item.file_paths !== undefined ? item.file_paths : (item.FilePaths || []),
+    downloads: item.downloads !== undefined ? item.downloads : (item.Downloads || 0),
+    is_active: item.is_active !== undefined ? item.is_active : (item.IsActive ?? false),
+    expires_at: item.expires_at !== undefined ? item.expires_at : item.ExpiresAt,
+    download_history: item.download_history !== undefined ? item.download_history : (item.DownloadHistory || []),
   }));
   return {
     shares: mapped,
@@ -147,6 +162,39 @@ export async function fetchTransfers(): Promise<ActiveTransfersResponse> {
 export async function disconnectDownloader(token: string, ip: string): Promise<void> {
   const base = getBackendBaseUrl().replace(/\/$/, "");
   const res = await fetch(`${base}/v1/transfers?token=${token}&ip=${ip}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    throw new Error(await parseError(res));
+  }
+}
+
+export async function checkFiles(paths: string[]): Promise<{ exists: boolean; missing: string[] }> {
+  const base = getBackendBaseUrl().replace(/\/$/, "");
+  const res = await fetch(`${base}/v1/files/check`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ paths }),
+  });
+  if (!res.ok) {
+    throw new Error(await parseError(res));
+  }
+  return res.json() as Promise<{ exists: boolean; missing: string[] }>;
+}
+
+export async function deleteShareHistory(token: string): Promise<void> {
+  const base = getBackendBaseUrl().replace(/\/$/, "");
+  const res = await fetch(`${base}/v1/shares?token=${token}&history=true`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    throw new Error(await parseError(res));
+  }
+}
+
+export async function clearAllSharesHistory(): Promise<void> {
+  const base = getBackendBaseUrl().replace(/\/$/, "");
+  const res = await fetch(`${base}/v1/shares?clear_all=true`, {
     method: "DELETE",
   });
   if (!res.ok) {

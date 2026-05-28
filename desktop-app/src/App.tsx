@@ -16,6 +16,7 @@ import {
   deleteShare,
   fetchTransfers,
   getBackendBaseUrl,
+  clearAllSharesHistory,
   type ShareListItem,
 } from "./lib/backend";
 
@@ -79,6 +80,17 @@ function App() {
     if (backendOk !== true) return;
     void loadShares();
   }, [backendOk, loadShares]);
+
+  useEffect(() => {
+    if (backendOk !== true) return;
+    if (currentTab === "history") {
+      void loadShares();
+      const interval = setInterval(() => {
+        void loadShares();
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [backendOk, currentTab, loadShares]);
 
   useEffect(() => {
     if (backendOk !== true) return;
@@ -222,8 +234,30 @@ function App() {
 
     setSelectedFiles((currentFiles) => [...currentFiles, ...filesWithState]);
     dragDepth.current = 0;
-    setIsDragging(false);
   }, []);
+
+  const handleReShareHistoryFiles = useCallback((paths: string[]) => {
+    const filesToShare = paths.map((path) => {
+      const normalized = path.replace(/\\/g, "/");
+      const name = normalized.split("/").pop() || path;
+      return {
+        name,
+        path,
+        size: undefined,
+      };
+    });
+    void handleFilesAdded(filesToShare);
+    setCurrentTab("transfers");
+  }, [handleFilesAdded]);
+
+  const handleClearAllHistory = useCallback(async () => {
+    try {
+      await clearAllSharesHistory();
+      await loadShares();
+    } catch (err) {
+      console.error("Failed to clear sharing history:", err);
+    }
+  }, [loadShares]);
 
   const openFileBrowser = async () => {
     if (!("__TAURI_INTERNALS__" in window)) {
@@ -521,7 +555,12 @@ function App() {
             )}
 
             {currentTab === "history" && (
-              <HistoryView items={shares} loading={sharesLoading} />
+              <HistoryView
+                items={shares}
+                loading={sharesLoading}
+                onReShare={handleReShareHistoryFiles}
+                onRefresh={loadShares}
+              />
             )}
 
             {currentTab === "devices" && (
@@ -529,7 +568,11 @@ function App() {
             )}
 
             {currentTab === "settings" && (
-              <SettingsView themeSetting={themeSetting} onThemeChange={changeThemeSetting} />
+              <SettingsView
+                themeSetting={themeSetting}
+                onThemeChange={changeThemeSetting}
+                onClearHistory={handleClearAllHistory}
+              />
             )}
           </div>
         </main>

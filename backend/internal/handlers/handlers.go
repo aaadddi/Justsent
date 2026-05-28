@@ -146,7 +146,7 @@ func HandleShares(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(resp)
 		return
 	} else if r.Method == http.MethodGet {
-		list := share.List()
+		list := share.ListHistory()
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"shares":        list,
@@ -154,6 +154,31 @@ func HandleShares(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	} else if r.Method == http.MethodDelete {
+		clearAll := r.URL.Query().Get("clear_all") == "true"
+		if clearAll {
+			_, err := db.DB.Exec("DELETE FROM shares")
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			_, err = db.DB.Exec("DELETE FROM downloads_history")
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			share.ClearAllMemory()
+			_ = tunnel.Release()
+
+			share.TransfersMu.Lock()
+			share.BlockedIPs = map[string]bool{}
+			share.TransfersMu.Unlock()
+
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(`{"status": "cleared_all_history"}`))
+			return
+		}
+
 		token := r.URL.Query().Get("token")
 		if token == "" {
 			parts := strings.Split(r.URL.Path, "/")
@@ -167,9 +192,25 @@ func HandleShares(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		deleteHistory := r.URL.Query().Get("history") == "true"
+		if deleteHistory {
+			_, err := db.DB.Exec("DELETE FROM shares WHERE token = ?", token)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			share.DeleteMemoryOnly(token)
+
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(`{"status": "deleted_history"}`))
+			return
+		}
+
 		s, exists := share.Get(token)
 		if !exists {
-			http.Error(w, "Share not found", http.StatusNotFound)
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(`{"status": "already_stopped"}`))
 			return
 		}
 
@@ -305,6 +346,11 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Disable caching for the download endpoint to ensure subsequent download requests hit the server and register
+	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+
 	if len(s.FilePaths) == 0 {
 		http.Error(w, "No files in share", http.StatusInternalServerError)
 		return
@@ -421,6 +467,12 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	r = r.WithContext(ctx)
 
+	// Record download event in history only for initial request (no Range header, or starts at offset 0)
+	rangeHeader := r.Header.Get("Range")
+	if rangeHeader == "" || strings.HasPrefix(rangeHeader, "bytes=0-") {
+		share.RecordDownload(token, clientIP)
+	}
+
 	// Initialize active transfer connection
 	sessionID := fmt.Sprintf("%s_%d", token, time.Now().UnixNano())
 	share.TransfersMu.Lock()
@@ -509,4 +561,32 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 			_, _ = io.Copy(writer, file)
 		}()
 	}
+}
+
+func HandleCheckFiles(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var body struct {
+		Paths []string `json:"paths"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	missing := []string{}
+	for _, p := range body.Paths {
+		if _, err := os.Stat(p); err != nil {
+			missing = append(missing, p)
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"exists":  len(missing) == 0,
+		"missing": missing,
+	})
 }

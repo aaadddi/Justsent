@@ -75,5 +75,22 @@ func migrate() error {
 	}
 
 	_, err = DB.Exec(createSettingsTable)
+	if err != nil {
+		return err
+	}
+
+	// Try to add is_active column if it doesn't exist
+	_, _ = DB.Exec("ALTER TABLE shares ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1")
+
+	// Create downloads_history table
+	createDownloadsHistoryTable := `
+	CREATE TABLE IF NOT EXISTS downloads_history (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		share_token TEXT NOT NULL,
+		downloader_ip TEXT NOT NULL,
+		downloaded_at DATETIME NOT NULL,
+		FOREIGN KEY(share_token) REFERENCES shares(token) ON DELETE CASCADE
+	);`
+	_, err = DB.Exec(createDownloadsHistoryTable)
 	return err
 }

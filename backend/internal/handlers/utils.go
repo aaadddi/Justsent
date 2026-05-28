@@ -130,7 +130,7 @@ func GetPasswordPageTemplate() *template.Template {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Share | JustSent</title>
+    <title>Secure Share | Justsent</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -517,7 +517,7 @@ func GetPasswordPageTemplate() *template.Template {
         <div id="form-content">
             <div class="logo-row">
                 <div class="logo-icon">J</div>
-                <div class="logo-text">JustSent</div>
+                <div class="logo-text">Justsent</div>
             </div>
 
             <h1>Protected Share</h1>
@@ -560,7 +560,7 @@ func GetPasswordPageTemplate() *template.Template {
             </form>
 
             <div class="footer">
-                <p>Secured with local file sharing by <a href="https://github.com" target="_blank">JustSent</a></p>
+                <p>Secured with local file sharing by <a href="https://github.com" target="_blank">Justsent</a></p>
             </div>
         </div>
     </div>

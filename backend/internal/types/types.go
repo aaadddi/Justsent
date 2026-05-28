@@ -6,23 +6,30 @@ import (
 	"time"
 )
 
+type DownloadHistoryItem struct {
+	DownloaderIP string    `json:"downloader_ip"`
+	DownloadedAt time.Time `json:"downloaded_at"`
+}
+
 type Share struct {
-	ID                int
-	Token             string
-	FilePaths         []string
-	Label             string
-	PrimaryName       string
-	PublicDownloadURL string
-	LocalDownloadURL  string
-	IsInternet        bool
-	IsLAN             bool
-	FileCount         int
-	TotalSize         int64
-	PasswordHash      string
-	Note              string
-	Downloads         int
-	CreatedAt         time.Time
-	ExpiresAt         *time.Time
+	ID                int                 `json:"id"`
+	Token             string              `json:"token"`
+	FilePaths         []string            `json:"file_paths"`
+	Label             string              `json:"label"`
+	PrimaryName       string              `json:"primary_name"`
+	PublicDownloadURL string              `json:"public_download_url"`
+	LocalDownloadURL  string              `json:"local_download_url"`
+	IsInternet        bool                `json:"is_internet"`
+	IsLAN             bool                `json:"is_lan"`
+	FileCount         int                 `json:"file_count"`
+	TotalSize         int64               `json:"total_size"`
+	PasswordHash      string              `json:"password_hash"`
+	Note              string              `json:"note"`
+	Downloads         int                 `json:"downloads"`
+	CreatedAt         time.Time           `json:"created_at"`
+	ExpiresAt         *time.Time          `json:"expires_at"`
+	IsActive          bool                `json:"is_active"`
+	DownloadHistory   []DownloadHistoryItem `json:"download_history"`
 }
 
 type CreateResp struct {

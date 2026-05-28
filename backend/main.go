@@ -36,13 +36,14 @@ func main() {
 	}
 
 	http.HandleFunc("/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "JustSent backend running")
+		fmt.Fprintln(w, "Justsent backend running")
 	}))
 
 	http.HandleFunc("/health", enableCORS(handlers.HandleHealth))
 	http.HandleFunc("/v1/settings", enableCORS(handlers.HandleSettings))
 	http.HandleFunc("/v1/shares", enableCORS(handlers.HandleShares))
 	http.HandleFunc("/v1/transfers", enableCORS(handlers.HandleTransfers))
+	http.HandleFunc("/v1/files/check", enableCORS(handlers.HandleCheckFiles))
 	http.HandleFunc("/share/", enableCORS(handlers.HandleDownload))
 
 	// START SERVER IN BACKGROUND

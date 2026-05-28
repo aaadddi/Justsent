@@ -111,7 +111,7 @@ func Load() error {
 
 	rows, err := db.DB.Query(`
 		SELECT id, token, file_paths, label, primary_name, public_download_url, local_download_url,
-		       is_internet, is_lan, file_count, total_size, password_hash, note, downloads, created_at, expires_at
+		       is_internet, is_lan, file_count, total_size, password_hash, note, downloads, created_at, expires_at, is_active
 		FROM shares
 	`)
 	if err != nil {
@@ -123,14 +123,14 @@ func Load() error {
 	for rows.Next() {
 		var s types.Share
 		var pathsJSON string
-		var isInternetVal, isLANVal int
+		var isInternetVal, isLANVal, isActiveVal int
 		var expiresAtVal *time.Time
 
 		err := rows.Scan(
 			&s.ID, &s.Token, &pathsJSON, &s.Label, &s.PrimaryName,
 			&s.PublicDownloadURL, &s.LocalDownloadURL,
 			&isInternetVal, &isLANVal, &s.FileCount, &s.TotalSize,
-			&s.PasswordHash, &s.Note, &s.Downloads, &s.CreatedAt, &expiresAtVal,
+			&s.PasswordHash, &s.Note, &s.Downloads, &s.CreatedAt, &expiresAtVal, &isActiveVal,
 		)
 		if err != nil {
 			return err
@@ -138,13 +138,16 @@ func Load() error {
 
 		s.IsInternet = isInternetVal == 1
 		s.IsLAN = isLANVal == 1
+		s.IsActive = isActiveVal == 1
 		s.ExpiresAt = expiresAtVal
 
 		if err := json.Unmarshal([]byte(pathsJSON), &s.FilePaths); err != nil {
 			s.FilePaths = []string{pathsJSON}
 		}
 
-		shares[s.Token] = s
+		if s.IsActive {
+			shares[s.Token] = s
+		}
 		if s.ID > maxID {
 			maxID = s.ID
 		}
@@ -199,6 +202,7 @@ func Create(paths []string, label string, publicBaseURL string, localBaseURL str
 		PrimaryName:       primaryName,
 		PasswordHash:      password,
 		Note:              note,
+		IsActive:          true,
 	}
 
 	// Persist to database
@@ -209,8 +213,8 @@ func Create(paths []string, label string, publicBaseURL string, localBaseURL str
 
 	_, err = db.DB.Exec(`
 		INSERT INTO shares (id, token, file_paths, label, primary_name, public_download_url, local_download_url,
-		                    is_internet, is_lan, file_count, total_size, password_hash, note, downloads, created_at, expires_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		                    is_internet, is_lan, file_count, total_size, password_hash, note, downloads, created_at, expires_at, is_active)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
 	`, s.ID, s.Token, string(pathsBytes), s.Label, s.PrimaryName, s.PublicDownloadURL, s.LocalDownloadURL,
 		boolToInt(s.IsInternet), boolToInt(s.IsLAN), s.FileCount, s.TotalSize, s.PasswordHash, s.Note, s.Downloads, s.CreatedAt, s.ExpiresAt)
 	if err != nil {
@@ -243,12 +247,112 @@ func Delete(token string) bool {
 	defer mu.Unlock()
 	_, exists := shares[token]
 	if exists {
-		_, err := db.DB.Exec("DELETE FROM shares WHERE token = ?", token)
+		_, err := db.DB.Exec("UPDATE shares SET is_active = 0 WHERE token = ?", token)
 		if err != nil {
-			fmt.Printf("Error deleting share %s from database: %v\n", token, err)
+			fmt.Printf("Error marking share %s as inactive in database: %v\n", token, err)
 		}
 		delete(shares, token)
 		return true
 	}
 	return false
+}
+
+func RecordDownload(token string, ip string) {
+	mu.Lock()
+	s, exists := shares[token]
+	if exists {
+		s.Downloads++
+		shares[token] = s
+	}
+	mu.Unlock()
+
+	_, err := db.DB.Exec("UPDATE shares SET downloads = downloads + 1 WHERE token = ?", token)
+	if err != nil {
+		fmt.Printf("Error updating downloads count: %v\n", err)
+	}
+
+	_, err = db.DB.Exec(`
+		INSERT INTO downloads_history (share_token, downloader_ip, downloaded_at)
+		VALUES (?, ?, ?)
+	`, token, ip, time.Now())
+	if err != nil {
+		fmt.Printf("Error inserting downloads history: %v\n", err)
+	}
+}
+
+func ListHistory() []types.Share {
+	rows, err := db.DB.Query(`
+		SELECT id, token, file_paths, label, primary_name, public_download_url, local_download_url,
+		       is_internet, is_lan, file_count, total_size, password_hash, note, downloads, created_at, expires_at, is_active
+		FROM shares
+		ORDER BY created_at DESC
+	`)
+	if err != nil {
+		fmt.Printf("Error querying shares history: %v\n", err)
+		return nil
+	}
+	defer rows.Close()
+
+	var history []types.Share
+	for rows.Next() {
+		var s types.Share
+		var pathsJSON string
+		var isInternetVal, isLANVal, isActiveVal int
+		var expiresAtVal *time.Time
+
+		err := rows.Scan(
+			&s.ID, &s.Token, &pathsJSON, &s.Label, &s.PrimaryName,
+			&s.PublicDownloadURL, &s.LocalDownloadURL,
+			&isInternetVal, &isLANVal, &s.FileCount, &s.TotalSize,
+			&s.PasswordHash, &s.Note, &s.Downloads, &s.CreatedAt, &expiresAtVal, &isActiveVal,
+		)
+		if err != nil {
+			fmt.Printf("Error scanning history row: %v\n", err)
+			continue
+		}
+
+		s.IsInternet = isInternetVal == 1
+		s.IsLAN = isLANVal == 1
+		s.IsActive = isActiveVal == 1
+		s.ExpiresAt = expiresAtVal
+
+		if err := json.Unmarshal([]byte(pathsJSON), &s.FilePaths); err != nil {
+			s.FilePaths = []string{pathsJSON}
+		}
+
+		// Query download history for this share
+		dlRows, err := db.DB.Query(`
+			SELECT downloader_ip, downloaded_at
+			FROM downloads_history
+			WHERE share_token = ?
+			ORDER BY downloaded_at DESC
+		`, s.Token)
+		if err == nil {
+			var dlHistory []types.DownloadHistoryItem
+			for dlRows.Next() {
+				var dlItem types.DownloadHistoryItem
+				if err := dlRows.Scan(&dlItem.DownloaderIP, &dlItem.DownloadedAt); err == nil {
+					dlHistory = append(dlHistory, dlItem)
+				}
+			}
+			dlRows.Close()
+			s.DownloadHistory = dlHistory
+		}
+
+		history = append(history, s)
+	}
+
+	return history
+}
+
+func DeleteMemoryOnly(token string) {
+	mu.Lock()
+	delete(shares, token)
+	mu.Unlock()
+}
+
+func ClearAllMemory() {
+	mu.Lock()
+	shares = map[string]types.Share{}
+	mu.Unlock()
 }
