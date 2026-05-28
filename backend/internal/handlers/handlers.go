@@ -3,6 +3,7 @@ package handlers
 import (
 	"archive/zip"
 	"backend-app/config"
+	"backend-app/internal/db"
 	"backend-app/internal/share"
 	"backend-app/internal/tunnel"
 	"backend-app/internal/types"
@@ -26,6 +27,54 @@ func HandleHealth(w http.ResponseWriter, r *http.Request) {
 		"status":        "ok",
 		"tunnel_active": tunnel.IsRunning(),
 	})
+}
+
+func HandleSettings(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method == http.MethodGet {
+		rows, err := db.DB.Query("SELECT key, value FROM settings")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		settings := map[string]string{}
+		for rows.Next() {
+			var key, val string
+			if err := rows.Scan(&key, &val); err == nil {
+				settings[key] = val
+			}
+		}
+		json.NewEncoder(w).Encode(settings)
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		var body map[string]string
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+
+		for k, v := range body {
+			_, err := db.DB.Exec(`
+				INSERT INTO settings (key, value)
+				VALUES (?, ?)
+				ON CONFLICT(key) DO UPDATE SET value=excluded.value
+			`, k, v)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+		return
+	}
+
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 }
 
 func HandleShares(w http.ResponseWriter, r *http.Request) {

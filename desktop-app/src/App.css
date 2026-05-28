@@ -81,12 +81,12 @@
 :root {
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --bg-window: #F6F3EE;
-  --bg-sidebar: rgba(246, 243, 238, 0.72);
+  --bg-sidebar: rgba(238, 234, 227, 0.88);
   --bg-card: #FFFDFC;
   --bg-hover: rgba(110, 106, 99, 0.08);
   --text-primary: #1F1F1B;
-  --text-secondary: #6E6A63;
-  --text-muted: #9E9990;
+  --text-secondary: #5E5A54;
+  --text-muted: #807B72;
   --accent: #B8642A;
   --accent-hover: #9E5422;
   --accent-soft: #F3E4D8;
@@ -114,12 +114,12 @@
 
 .dark-theme {
   --bg-window: radial-gradient(circle at top left, #1F1C18 0%, #171512 45%, #0F0E0C 100%);
-  --bg-sidebar: rgba(23, 21, 18, 0.72);
+  --bg-sidebar: rgba(14, 13, 11, 0.85);
   --bg-card: #2D2A25;
   --bg-hover: rgba(255, 253, 252, 0.08);
   --text-primary: #F7F5F0;
-  --text-secondary: #AAA49A;
-  --text-muted: #807B72;
+  --text-secondary: #B5AFA5;
+  --text-muted: #8E8980;
   --accent: #D47A3B;
   --accent-hover: #B8642A;
   --accent-soft: rgba(212, 122, 59, 0.18);
@@ -199,6 +199,7 @@ body {
   /* Maximum native macOS utility width */
   background-color: var(--bg-sidebar);
   border-right: 1px solid var(--border-strong);
+  box-shadow: 1px 0 10px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
   padding: 0;
@@ -351,11 +352,12 @@ body {
 
 .main-content-inner {
   width: 100%;
-  max-width: 920px;
-  padding: 0 40px;
+  max-width: 780px; /* Slightly reduced content width for improved sidebar balance */
+  padding: 0 32px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px; /* Tightened gap between header, dropzone, and lists */
+  flex: 1;
 }
 
 .content-heading {
@@ -367,7 +369,7 @@ body {
 .main-title-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px; /* Tightened spacing around the title and pill */
 }
 
 .backend-status {
@@ -428,39 +430,53 @@ body {
   transform: translateY(0);
 }
 
-
 /* Drop Zone */
 .drop-zone {
   width: 100%;
-  border: 1.5px dashed rgba(184, 100, 42, 0.25);
-  border-radius: 16px;
-  min-height: 180px;
-  padding: 32px 24px;
+  border: 1px dashed rgba(184, 100, 42, 0.25); /* Subtle dashed orange border */
+  border-radius: 16px; /* Smooth rounded corners as per image */
+  min-height: 222px; /* Increased by 20% from 185px */
+  padding: 36px 24px; /* Spacious vertical padding */
   cursor: pointer;
-  background: var(--bg-card);
+  background-color: var(--bg-card); /* White/clean card surface background */
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   position: relative;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 6px 20px rgba(110, 106, 99, 0.06), 0 1px 4px rgba(110, 106, 99, 0.03); /* Soft, beautiful shadow */
 }
 
 .dark-theme .drop-zone {
-  border-color: rgba(212, 122, 59, 0.3);
+  border-color: rgba(212, 122, 59, 0.28); /* Warm dashed border in dark mode */
+  background-color: #2D2A25; /* Lighter than dark mode window gradient */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); /* Deeper shadow for dark mode contrast */
 }
 
 .drop-zone:hover {
-  border-color: var(--accent);
-  box-shadow: 0 4px 16px rgba(184, 100, 42, 0.08);
+  background-color: #FFFFFF; /* Slightly brighter background on hover */
+  border-color: rgba(184, 100, 42, 0.6); /* Slightly stronger dashed border on hover */
+  box-shadow: 0 10px 28px rgba(184, 100, 42, 0.06), 0 2px 8px rgba(110, 106, 99, 0.03); /* Elevated shadow on hover */
+}
+
+.dark-theme .drop-zone:hover {
+  background-color: #35322C; /* Slightly brighter background on hover */
+  border-color: rgba(212, 122, 59, 0.65); /* Slightly stronger dashed border on hover */
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.38);
 }
 
 .drop-zone.dragging {
-  border-color: var(--accent);
+  border-style: solid; /* Changes to solid active border on dragging */
+  border-color: var(--accent); /* Orange border/glow on drag active */
   background-color: var(--accent-soft);
-  transform: scale(1.01);
-  box-shadow: 0 4px 20px rgba(184, 100, 42, 0.15);
+  transform: scale(1.005);
+  box-shadow: 0 4px 24px rgba(184, 100, 42, 0.12);
+}
+
+.drop-zone.large {
+  margin-top: 36px; /* Positioned higher up closer to Transfers title */
+  margin-bottom: auto; /* Push the helper text divider to the bottom */
 }
 
 .drop-zone-inner {
@@ -472,30 +488,48 @@ body {
 }
 
 .drop-zone-icon-wrapper {
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background-color: rgba(184, 100, 42, 0.08);
+  background-color: rgba(184, 100, 42, 0.07); /* Light peach/orange circular background */
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent);
+  color: var(--accent); /* Orange cloud icon by default */
   margin-bottom: 12px;
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark-theme .drop-zone-icon-wrapper {
+  background-color: rgba(212, 122, 59, 0.12); /* Slightly warmer backdrop in dark mode */
+  color: var(--accent);
+}
+
+.drop-zone:hover .drop-zone-icon-wrapper {
+  color: var(--accent);
+  background-color: rgba(184, 100, 42, 0.14); /* Slightly richer peach on hover */
+  transform: scale(1.05);
+}
+
+.dark-theme .drop-zone:hover .drop-zone-icon-wrapper {
+  color: var(--accent);
+  background-color: rgba(212, 122, 59, 0.18);
 }
 
 .drop-zone-inner svg {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
 }
 
 .drop-zone.dragging .drop-zone-icon-wrapper {
+  background-color: var(--accent-soft);
+  color: var(--accent);
   transform: translateY(-4px);
 }
 
 .drop-zone-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px; /* Slightly larger, matching layout image scale */
+  font-weight: 700; /* Bold title as per shared image */
   color: var(--text-primary);
   margin-bottom: 4px;
   text-align: center;
@@ -504,24 +538,46 @@ body {
 .drop-zone-subtitle {
   font-size: 12px;
   color: var(--text-secondary);
+  opacity: 0.85;
   text-align: center;
 }
-
-/* Transfers header status badges */
-.header-status-badges {
-  display: flex;
+/* Tunnel Status Badge Pill Style */
+.tunnel-status-badge {
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
-  margin-left: 16px;
-  font-size: 12px;
-  color: var(--text-secondary);
+  gap: 5px;
+  padding: 3px 8px 3px 7px; /* Optically balanced padding for dot and label */
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  transition: all 0.15s ease;
+  margin-left: 4px; /* Tighter grouping and alignment next to Transfers title */
+  align-self: center; /* Optically centered relative to title row */
 }
 
-.header-status-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 500;
+.tunnel-status-badge.active {
+  background-color: rgba(59, 122, 87, 0.08); /* Subtle green background */
+  border: 1px solid rgba(59, 122, 87, 0.22); /* Clearer green border */
+  color: #244b35; /* High contrast green text for improved readability */
+}
+
+.dark-theme .tunnel-status-badge.active {
+  background-color: rgba(75, 179, 120, 0.12); /* Subtle green background */
+  border-color: rgba(75, 179, 120, 0.28); /* Clearer border */
+  color: #a2eec0; /* High contrast bright green text */
+}
+
+.tunnel-status-badge.inactive {
+  background-color: rgba(110, 106, 99, 0.07); /* Muted neutral gray background */
+  border: 1px solid rgba(110, 106, 99, 0.2); /* Clearer gray border */
+  color: #4a4742; /* Improved text contrast for neutral status */
+}
+
+.dark-theme .tunnel-status-badge.inactive {
+  background-color: rgba(255, 253, 252, 0.07);
+  border-color: rgba(255, 253, 252, 0.18);
+  color: #dcd7ce; /* Improved text contrast for dark theme inactive status */
 }
 
 .status-dot {
@@ -533,6 +589,11 @@ body {
 .status-dot.green {
   background-color: var(--success);
   box-shadow: 0 0 0 2px rgba(59, 122, 87, 0.2);
+}
+
+.status-dot.gray {
+  background-color: var(--text-muted);
+  box-shadow: 0 0 0 2px rgba(158, 153, 144, 0.2);
 }
 
 .shield-icon {
@@ -699,6 +760,12 @@ body {
 .bullet-separator {
   color: var(--text-muted);
   opacity: 0.7;
+}
+
+.lock-icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-secondary);
 }
 
 .state-text.uploading {
@@ -2296,4 +2363,167 @@ body {
 .settings-textarea-input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.transfers-helper-text {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-top: 56px; /* Spacing so it does not compete with dropzone */
+  margin-bottom: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-strong); /* Divider line as per shared image */
+  opacity: 0.7; /* Balanced readability */
+  letter-spacing: -0.01em;
+}
+
+/* Settings View Layout & Styles */
+.settings-view-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  animation: slideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.settings-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 2px 0;
+  letter-spacing: -0.01em;
+}
+
+.settings-section-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0 0 10px 0;
+}
+
+.theme-options-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
+.theme-option-card {
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--bg-card);
+  padding: 14px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: var(--transition-mac);
+  position: relative;
+  box-shadow: var(--shadow-sm);
+}
+
+.theme-option-card:hover {
+  border-color: rgba(184, 100, 42, 0.4);
+  box-shadow: 0 4px 12px rgba(184, 100, 42, 0.03);
+  background: #FFFFFF;
+}
+
+.dark-theme .theme-option-card:hover {
+  border-color: rgba(212, 122, 59, 0.4);
+  background: #35322C;
+}
+
+.theme-option-card.active {
+  border-color: var(--accent);
+  border-width: 1.5px;
+  box-shadow: 0 4px 16px rgba(184, 100, 42, 0.08);
+}
+
+.theme-card-preview {
+  height: 80px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: var(--transition-mac);
+}
+
+.system-preview {
+  background: linear-gradient(135deg, #F3F1EC 50%, #292621 50%);
+  border: 1px solid var(--border-light);
+}
+
+.light-preview {
+  background: #FAF6F0;
+  border: 1px solid var(--border-light);
+  color: var(--accent);
+}
+
+.dark-preview {
+  background: #25221E;
+  border: 1px solid rgba(255, 253, 252, 0.05);
+  color: var(--accent);
+}
+
+.theme-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.theme-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.theme-card-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.2;
+}
+
+.about-info-card {
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--bg-card);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.about-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.about-row:last-child {
+  border-bottom: none;
+}
+
+.about-label {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.about-val {
+  font-size: 12.5px;
+  color: var(--text-primary);
+  font-weight: 600;
 }

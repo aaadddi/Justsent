@@ -1,9 +1,11 @@
 package share
 
 import (
+	"backend-app/internal/db"
 	"backend-app/internal/types"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"sync"
@@ -96,6 +98,62 @@ func generateToken() string {
 	return hex.EncodeToString(bytes)
 }
 
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+func Load() error {
+	mu.Lock()
+	defer mu.Unlock()
+
+	rows, err := db.DB.Query(`
+		SELECT id, token, file_paths, label, primary_name, public_download_url, local_download_url,
+		       is_internet, is_lan, file_count, total_size, password_hash, note, downloads, created_at, expires_at
+		FROM shares
+	`)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var maxID int
+	for rows.Next() {
+		var s types.Share
+		var pathsJSON string
+		var isInternetVal, isLANVal int
+		var expiresAtVal *time.Time
+
+		err := rows.Scan(
+			&s.ID, &s.Token, &pathsJSON, &s.Label, &s.PrimaryName,
+			&s.PublicDownloadURL, &s.LocalDownloadURL,
+			&isInternetVal, &isLANVal, &s.FileCount, &s.TotalSize,
+			&s.PasswordHash, &s.Note, &s.Downloads, &s.CreatedAt, &expiresAtVal,
+		)
+		if err != nil {
+			return err
+		}
+
+		s.IsInternet = isInternetVal == 1
+		s.IsLAN = isLANVal == 1
+		s.ExpiresAt = expiresAtVal
+
+		if err := json.Unmarshal([]byte(pathsJSON), &s.FilePaths); err != nil {
+			s.FilePaths = []string{pathsJSON}
+		}
+
+		shares[s.Token] = s
+		if s.ID > maxID {
+			maxID = s.ID
+		}
+	}
+
+	nextID = maxID + 1
+	return nil
+}
+
 func Create(paths []string, label string, publicBaseURL string, localBaseURL string, password string, note string, isInternet bool, isLAN bool) (types.Share, error) {
 	mu.Lock()
 	defer mu.Unlock()
@@ -143,6 +201,22 @@ func Create(paths []string, label string, publicBaseURL string, localBaseURL str
 		Note:              note,
 	}
 
+	// Persist to database
+	pathsBytes, err := json.Marshal(paths)
+	if err != nil {
+		return types.Share{}, fmt.Errorf("failed to marshal file paths: %w", err)
+	}
+
+	_, err = db.DB.Exec(`
+		INSERT INTO shares (id, token, file_paths, label, primary_name, public_download_url, local_download_url,
+		                    is_internet, is_lan, file_count, total_size, password_hash, note, downloads, created_at, expires_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, s.ID, s.Token, string(pathsBytes), s.Label, s.PrimaryName, s.PublicDownloadURL, s.LocalDownloadURL,
+		boolToInt(s.IsInternet), boolToInt(s.IsLAN), s.FileCount, s.TotalSize, s.PasswordHash, s.Note, s.Downloads, s.CreatedAt, s.ExpiresAt)
+	if err != nil {
+		return types.Share{}, fmt.Errorf("failed to persist share to database: %w", err)
+	}
+
 	shares[token] = s
 	return s, nil
 }
@@ -169,6 +243,10 @@ func Delete(token string) bool {
 	defer mu.Unlock()
 	_, exists := shares[token]
 	if exists {
+		_, err := db.DB.Exec("DELETE FROM shares WHERE token = ?", token)
+		if err != nil {
+			fmt.Printf("Error deleting share %s from database: %v\n", token, err)
+		}
 		delete(shares, token)
 		return true
 	}

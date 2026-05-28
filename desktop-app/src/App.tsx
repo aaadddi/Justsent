@@ -6,20 +6,22 @@ import FileCard, { type StatefulFile } from "./Components/FileCard";
 import Header from "./Components/Header";
 import FileDrop, { type SelectedFile } from "./Components/FileDrop";
 import Sidebar from "./Components/Sidebar";
-import RecentActivity from "./Components/RecentActivity";
 import HistoryView from "./Components/HistoryView";
 import DevicesView from "./Components/DevicesView";
+import SettingsView from "./Components/SettingsView";
 import {
   createShare,
   fetchBackendHealth,
   listShares,
   deleteShare,
   fetchTransfers,
+  getBackendBaseUrl,
   type ShareListItem,
 } from "./lib/backend";
 
 function App() {
   const [backendOk, setBackendOk] = useState<boolean | null>(null);
+  const [themeSetting, setThemeSetting] = useState<"system" | "light" | "dark">("system");
   const [isDark, setIsDark] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<StatefulFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -45,18 +47,31 @@ function App() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchBackendHealth()
-      .then((res) => {
+
+    const checkHealth = async () => {
+      try {
+        const res = await fetchBackendHealth();
         if (!cancelled) {
           setBackendOk(true);
           setTunnelActive(res.tunnel_active);
         }
-      })
-      .catch(() => {
-        if (!cancelled) setBackendOk(false);
-      });
+      } catch (err) {
+        console.error("Failed to fetch health check status:", err);
+        if (!cancelled) {
+          setBackendOk(false);
+        }
+      }
+    };
+
+    void checkHealth();
+
+    const interval = setInterval(() => {
+      void checkHealth();
+    }, 5000);
+
     return () => {
       cancelled = true;
+      clearInterval(interval);
     };
   }, []);
 
@@ -67,18 +82,37 @@ function App() {
 
   useEffect(() => {
     if (backendOk !== true) return;
-
-    const interval = setInterval(async () => {
+    const fetchSettings = async () => {
       try {
-        const health = await fetchBackendHealth();
-        setTunnelActive(health.tunnel_active);
+        const base = getBackendBaseUrl().replace(/\/$/, "");
+        const res = await fetch(`${base}/v1/settings`);
+        if (res.ok) {
+          const settings = (await res.json()) as Record<string, string>;
+          if (settings.theme === "dark" || settings.theme === "light" || settings.theme === "system") {
+            setThemeSetting(settings.theme as "system" | "light" | "dark");
+          }
+        }
       } catch (err) {
-        console.error("Failed to fetch health check status:", err);
+        console.error("Failed to fetch settings:", err);
       }
-    }, 5000);
-
-    return () => clearInterval(interval);
+    };
+    void fetchSettings();
   }, [backendOk]);
+
+  useEffect(() => {
+    if (themeSetting === "system") {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      setIsDark(mediaQuery.matches);
+
+      const handler = (e: MediaQueryListEvent) => {
+        setIsDark(e.matches);
+      };
+      mediaQuery.addEventListener("change", handler);
+      return () => mediaQuery.removeEventListener("change", handler);
+    } else {
+      setIsDark(themeSetting === "dark");
+    }
+  }, [themeSetting]);
 
   const isSharingActive = selectedFiles.some((f) => f.isSharing && (f.shareLink || f.localShareLink));
 
@@ -139,7 +173,21 @@ function App() {
     return () => clearInterval(interval);
   }, [isSharingActive, backendOk]);
 
-  const toggleTheme = () => setIsDark(!isDark);
+  const changeThemeSetting = async (setting: "system" | "light" | "dark") => {
+    setThemeSetting(setting);
+
+    if (backendOk !== true) return;
+    try {
+      const base = getBackendBaseUrl().replace(/\/$/, "");
+      await fetch(`${base}/v1/settings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme: setting }),
+      });
+    } catch (err) {
+      console.error("Failed to save settings:", err);
+    }
+  };
 
   const handleFilesAdded = useCallback(async (files: SelectedFile[]) => {
     const filesWithSize = await Promise.all(
@@ -367,7 +415,7 @@ function App() {
 
   // Visibility and layout size rules for DropZone
   const showDropZone = true;
-  const dropZoneVariant = (selectedFiles.length === 0 && shares.length === 0) ? "large" : "compact";
+  const dropZoneVariant = selectedFiles.length === 0 ? "large" : "compact";
 
   return (
     <div className={`app-container ${isDark ? "dark-theme" : "light-theme"}`}>
@@ -376,13 +424,12 @@ function App() {
       <Sidebar
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
-        toggleTheme={toggleTheme}
       />
 
       <div className="app-body">
         <Header />
 
-        <main className="main-content">
+        <main className={`main-content ${selectedFiles.length === 0 ? "is-empty" : ""}`}>
           <div className="main-content-inner">
             <div className="content-heading">
               <div className="main-title-row">
@@ -390,31 +437,17 @@ function App() {
                   {currentTab === "transfers" && "Transfers"}
                   {currentTab === "history" && "History"}
                   {currentTab === "devices" && "Devices"}
+                  {currentTab === "settings" && "Settings"}
                 </h2>
                 {currentTab === "transfers" && (
-                  <div className="header-status-badges">
-                    <span className="header-status-item">
-                      <span className="status-dot green"></span>
-                      Online
-                    </span>
-                    <span className="header-status-item">
-                      <svg
-                        className="shield-icon"
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke={tunnelActive ? "var(--success)" : "var(--text-muted)"}
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        style={{ color: tunnelActive ? "var(--success)" : "var(--text-muted)" }}
-                      >
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                      </svg>
-                      <span style={{ color: tunnelActive ? "var(--text-primary)" : "var(--text-secondary)", opacity: tunnelActive ? 1 : 0.7 }}>
-                        {tunnelActive ? "Tunnel active" : "Tunnel inactive"}
-                      </span>
+                  <div className={`tunnel-status-badge ${backendOk === false ? "inactive" : tunnelActive ? "active" : "inactive"}`}>
+                    <span className={`status-dot ${backendOk === false ? "gray" : tunnelActive ? "green" : "gray"}`}></span>
+                    <span className="status-label">
+                      {backendOk === false
+                        ? "Internet sharing unavailable"
+                        : tunnelActive
+                        ? "Internet sharing active"
+                        : "Ready for local sharing"}
                     </span>
                   </div>
                 )}
@@ -474,17 +507,16 @@ function App() {
                   </div>
                 )}
 
-                <div className="recent-transfers-section">
-                  <div className="section-header-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <h3 className="section-title">Recent Transfers</h3>
-                    {shares.length > 0 && (
-                      <button className="view-all-link" onClick={() => setCurrentTab("history")}>
-                        View all &gt;
-                      </button>
-                    )}
-                  </div>
-                  <RecentActivity items={shares.slice(0, 3)} loading={sharesLoading} hideHeader activeCount={selectedFiles.length} />
-                </div>
+                {/* Recent Transfers removed from Transfers page */}
+                
+                {/* Bottom helper text */}
+                <p className="transfers-helper-text">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px", flexShrink: 0, opacity: 0.8 }}>
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  <span>Your files are transferred securely and directly.</span>
+                </p>
               </>
             )}
 
@@ -494,6 +526,10 @@ function App() {
 
             {currentTab === "devices" && (
               <DevicesView />
+            )}
+
+            {currentTab === "settings" && (
+              <SettingsView themeSetting={themeSetting} onThemeChange={changeThemeSetting} />
             )}
           </div>
         </main>

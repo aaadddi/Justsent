@@ -1,4 +1,5 @@
-import React from "react";
+import React, { type PointerEvent } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { SettingsIcon } from "../assets/icons";
 
 interface SidebarItemProps {
@@ -26,13 +27,22 @@ const SidebarSection: React.FC<{ children: React.ReactNode }> = ({ children }) =
 interface SidebarProps {
   currentTab: string;
   setCurrentTab: (tab: string) => void;
-  toggleTheme: () => void;
 }
 
-export default function Sidebar({ currentTab, setCurrentTab, toggleTheme }: SidebarProps) {
+export default function Sidebar({ currentTab, setCurrentTab }: SidebarProps) {
+  const startWindowDrag = (event: PointerEvent<HTMLElement>) => {
+    if (event.button !== 0 || (event.target instanceof HTMLElement && event.target.closest("button"))) {
+      return;
+    }
+
+    if ("__TAURI_INTERNALS__" in window) {
+      void getCurrentWindow().startDragging();
+    }
+  };
+
   return (
-    <aside className="sidebar" data-tauri-drag-region>
-      <div className="sidebar-traffic-lights"></div>
+    <aside className="sidebar" onPointerDown={startWindowDrag}>
+      <div className="sidebar-traffic-lights" data-tauri-drag-region></div>
 
       <div className="sidebar-menu-items">
         <SidebarSection>
@@ -77,7 +87,8 @@ export default function Sidebar({ currentTab, setCurrentTab, toggleTheme }: Side
       <div className="sidebar-footer">
         <SidebarItem
           label="Settings"
-          onClick={toggleTheme}
+          active={currentTab === "settings"}
+          onClick={() => setCurrentTab("settings")}
           icon={<SettingsIcon />}
         />
       </div>
