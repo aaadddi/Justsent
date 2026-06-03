@@ -5,8 +5,13 @@ import (
 	"backend-app/internal/db"
 	"backend-app/internal/handlers"
 	"backend-app/internal/share"
+	"backend-app/internal/tunnel"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 func enableCORS(next http.HandlerFunc) http.HandlerFunc {
@@ -55,5 +60,34 @@ func main() {
 			panic(err)
 		}
 	}()
-	select {}
+
+	// Channel to listen for signals
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	// Monitor parent PID to detect if parent process (Tauri app) exited and orphaned us
+	go func() {
+		initialPPID := os.Getppid()
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			currentPPID := os.Getppid()
+			if currentPPID == 1 || currentPPID != initialPPID {
+				fmt.Println("Parent process terminated. Initiating backend cleanup...")
+				sigChan <- syscall.SIGTERM
+				return
+			}
+		}
+	}()
+
+	// Wait for shutdown signal
+	sig := <-sigChan
+	fmt.Printf("Received signal: %v. Cleaning up tunnel...\n", sig)
+
+	// Clean up tunnel
+	if err := tunnel.Release(); err != nil {
+		fmt.Printf("Error releasing tunnel: %v\n", err)
+	}
+
+	fmt.Println("Backend shutdown complete.")
 }

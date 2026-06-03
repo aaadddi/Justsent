@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os/exec"
 	"regexp"
+	"runtime"
 )
 
 type Tunnel struct {
@@ -13,7 +14,20 @@ type Tunnel struct {
 	URL     string
 }
 
+func cleanupOldTunnels() {
+	// Kill any existing cloudflared processes running for our server port
+	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
+		// Use pkill to match cloudflared processes targeting our port
+		// -9 sends SIGKILL, -f matches the full command line
+		_ = exec.Command("pkill", "-9", "-f", "cloudflared.*"+config.ServerPort).Run()
+	} else if runtime.GOOS == "windows" {
+		_ = exec.Command("taskkill", "/F", "/IM", "cloudflared.exe").Run()
+	}
+}
+
 func Start() (*Tunnel, error) {
+	// Clean up any orphaned cloudflared processes from previous runs first
+	cleanupOldTunnels()
 
 	cmd := exec.Command(
 		config.CloudflaredPath(),

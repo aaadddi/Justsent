@@ -25,6 +25,7 @@ function App() {
   const [themeSetting, setThemeSetting] = useState<"system" | "light" | "dark">("system");
   const [isDark, setIsDark] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<StatefulFile[]>([]);
+  const isSharingActive = selectedFiles.some((f) => f.isSharing && (f.shareLink || f.localShareLink));
   const [isDragging, setIsDragging] = useState(false);
   const [shares, setShares] = useState<ShareListItem[]>([]);
   const [sharesLoading, setSharesLoading] = useState(false);
@@ -77,6 +78,55 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (!("__TAURI_INTERNALS__" in window)) return;
+
+    let isMounted = true;
+    let unlistenFn: (() => void) | undefined;
+
+    const setupCloseListener = async () => {
+      const { getCurrentWindow } = await import("@tauri-apps/api/window");
+      const { ask } = await import("@tauri-apps/plugin-dialog");
+
+      const windowInstance = getCurrentWindow();
+      const unlisten = await windowInstance.onCloseRequested(async (event) => {
+        if (isSharingActive || tunnelActive) {
+          event.preventDefault();
+
+          const confirmed = await ask(
+            "You have active sharing sessions. Closing the app will stop all sharing. Are you sure you want to quit?",
+            {
+              title: "Confirm Close",
+              kind: "warning",
+              okLabel: "Quit and Stop Sharing",
+              cancelLabel: "Keep Sharing",
+            }
+          );
+
+          if (confirmed) {
+            unlisten();
+            await windowInstance.close();
+          }
+        }
+      });
+
+      if (!isMounted) {
+        unlisten();
+      } else {
+        unlistenFn = unlisten;
+      }
+    };
+
+    void setupCloseListener();
+
+    return () => {
+      isMounted = false;
+      if (unlistenFn) {
+        unlistenFn();
+      }
+    };
+  }, [isSharingActive, tunnelActive]);
+
+  useEffect(() => {
     if (backendOk !== true) return;
     void loadShares();
   }, [backendOk, loadShares]);
@@ -125,8 +175,6 @@ function App() {
       setIsDark(themeSetting === "dark");
     }
   }, [themeSetting]);
-
-  const isSharingActive = selectedFiles.some((f) => f.isSharing && (f.shareLink || f.localShareLink));
 
   useEffect(() => {
     if (!isSharingActive || backendOk !== true) return;

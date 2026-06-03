@@ -7,6 +7,20 @@
     "core:default",
     "core:window:allow-start-dragging",
     "opener:default",
-    "dialog:default"
+    "dialog:default",
+    "shell:default",
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        {
+          "name": "bin/justsent-backend",
+          "sidecar": true
+        },
+        {
+          "name": "bin/cloudflared",
+          "sidecar": true
+        }
+      ]
+    }
   ]
 }
