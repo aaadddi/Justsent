@@ -91,6 +91,8 @@ export type ShareListItem = {
   downloads: number;
   is_active: boolean;
   expires_at?: string | null;
+  is_internet: boolean;
+  is_lan: boolean;
   download_history?: DownloadHistoryItem[];
 };
 
@@ -119,6 +121,8 @@ export async function listShares(): Promise<{ shares: ShareListItem[]; tunnelAct
     downloads: item.downloads !== undefined ? item.downloads : (item.Downloads || 0),
     is_active: item.is_active !== undefined ? item.is_active : (item.IsActive ?? false),
     expires_at: item.expires_at !== undefined ? item.expires_at : item.ExpiresAt,
+    is_internet: item.is_internet !== undefined ? item.is_internet : (item.IsInternet ?? false),
+    is_lan: item.is_lan !== undefined ? item.is_lan : (item.IsLAN ?? false),
     download_history: item.download_history !== undefined ? item.download_history : (item.DownloadHistory || []),
   }));
   return {

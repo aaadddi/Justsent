@@ -33,6 +33,15 @@ function App() {
   const [tunnelActive, setTunnelActive] = useState<boolean>(false);
   const dragDepth = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [highlightActive, setHighlightActive] = useState(false);
+
+  const triggerHighlight = () => {
+    if (!isSharingActive) return;
+    setHighlightActive(true);
+    setTimeout(() => {
+      setHighlightActive(false);
+    }, 2000);
+  };
 
   const loadShares = useCallback(async () => {
     setSharesLoading(true);
@@ -130,6 +139,75 @@ function App() {
     if (backendOk !== true) return;
     void loadShares();
   }, [backendOk, loadShares]);
+
+  // Synchronize selectedFiles with active shares from the backend
+  useEffect(() => {
+    if (sharesLoading) return;
+
+    setSelectedFiles((currentFiles) => {
+      const activeShares = shares.filter((s) => s.is_active);
+
+      // Check if any active share from backend is missing from selectedFiles
+      const missingActiveShares = activeShares.filter((share) => {
+        return !currentFiles.some(
+          (f) =>
+            f.id === share.token ||
+            (f.shareLink && f.shareLink.endsWith("/" + share.token)) ||
+            (f.localShareLink && f.localShareLink.endsWith("/" + share.token))
+        );
+      });
+
+      // Update state for files that are no longer active in the backend
+      let filesChanged = false;
+      const updatedFiles = currentFiles.map((file) => {
+        if (!file.isSharing) return file;
+
+        const token = (file.shareLink || file.localShareLink || "").split("/").pop();
+        const stillActive = activeShares.some((s) => s.token === token);
+
+        if (!stillActive) {
+          filesChanged = true;
+          return {
+            ...file,
+            isSharing: false,
+            shareLink: null,
+            localShareLink: null,
+            isCompleted: false,
+            isDownloading: false,
+            activeDownloads: [],
+            speed: undefined,
+            bytesWritten: undefined,
+          };
+        }
+        return file;
+      });
+
+      if (missingActiveShares.length > 0) {
+        const newFiles = missingActiveShares.map((share) => ({
+          id: share.token,
+          name: share.primary_name,
+          size: share.total_size,
+          path: share.file_paths[0],
+          isSharing: true,
+          shareLink: share.is_internet ? share.download_url : null,
+          localShareLink: share.is_lan ? share.local_download_url : null,
+          shareInternet: share.is_internet,
+          shareNearby: share.is_lan,
+          shareError: null,
+          shareCreating: false,
+          isActionsOpen: false,
+          passwordProtected: !!share.password,
+          passwordValue: share.password || "",
+          noteValue: share.note || "",
+          activeDownloads: [],
+        }));
+
+        return [...updatedFiles, ...newFiles];
+      }
+
+      return filesChanged ? updatedFiles : currentFiles;
+    });
+  }, [shares, sharesLoading]);
 
   useEffect(() => {
     if (backendOk !== true) return;
@@ -511,8 +589,8 @@ function App() {
       <div className="app-body">
         <Header />
 
-        <main className={`main-content ${selectedFiles.length === 0 ? "is-empty" : ""}`}>
-          <div className="main-content-inner">
+        <main className={`main-content ${selectedFiles.length === 0 ? "is-empty" : ""} ${currentTab === "history" ? "wide-layout" : ""}`}>
+          <div className={`main-content-inner ${currentTab === "history" ? "wide-layout" : ""}`}>
             <div className="content-heading">
               <div className="main-title-row">
                 <h2 className="main-title">
@@ -522,15 +600,14 @@ function App() {
                   {currentTab === "settings" && "Settings"}
                 </h2>
                 {currentTab === "transfers" && (
-                  <div className={`tunnel-status-badge ${backendOk === false ? "inactive" : tunnelActive ? "active" : "inactive"}`}>
-                    <span className={`status-dot ${backendOk === false ? "gray" : tunnelActive ? "green" : "gray"}`}></span>
-                    <span className="status-label">
-                      {backendOk === false
-                        ? "Internet sharing unavailable"
-                        : tunnelActive
-                        ? "Internet sharing active"
-                        : "Ready for local sharing"}
-                    </span>
+                  <div
+                    className={`tunnel-status-badge ${isSharingActive ? "active" : "inactive"}`}
+                    onClick={triggerHighlight}
+                    style={{ cursor: isSharingActive ? "pointer" : "default" }}
+                    title={isSharingActive ? "Click to highlight active sharing transfers" : undefined}
+                  >
+                    <span className={`status-dot ${isSharingActive ? "green" : "gray"}`}></span>
+                    <span className="status-label">Sharing</span>
                   </div>
                 )}
               </div>
@@ -583,6 +660,7 @@ function App() {
                           onTogglePasswordProtected={() => togglePasswordProtected(file.id)}
                           onChangePasswordValue={(val) => changePasswordValue(file.id, val)}
                           onChangeNoteValue={(val) => changeNoteValue(file.id, val)}
+                          isHighlighted={highlightActive && file.isSharing && (!!file.shareLink || !!file.localShareLink)}
                         />
                       ))}
                     </div>
@@ -608,6 +686,7 @@ function App() {
                 loading={sharesLoading}
                 onReShare={handleReShareHistoryFiles}
                 onRefresh={loadShares}
+                onGoToTransfers={() => setCurrentTab("transfers")}
               />
             )}
 

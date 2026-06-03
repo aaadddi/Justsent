@@ -37,6 +37,7 @@ type FileCardProps = {
   onTogglePasswordProtected: () => void;
   onChangePasswordValue: (val: string) => void;
   onChangeNoteValue: (val: string) => void;
+  isHighlighted?: boolean;
 };
 
 const getExtClass = (name: string) => {
@@ -71,6 +72,7 @@ export default function FileCard({
   onTogglePasswordProtected,
   onChangePasswordValue,
   onChangeNoteValue,
+  isHighlighted,
 }: FileCardProps) {
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -139,7 +141,7 @@ export default function FileCard({
   }
 
   return (
-    <div className={`file-card-container ${isSharing ? "is-sharing" : ""}`}>
+    <div className={`file-card-container ${isSharing ? "is-sharing" : ""} ${isHighlighted ? "highlight-active-share" : ""}`}>
       <div className="file-card-row">
         {/* Extension Badge */}
         <div className={`file-visual ${getExtClass(file.name)}`}>
