@@ -48,6 +48,11 @@ fn reveal_in_finder(path: String) -> Result<(), String> {
     }
 }
 
+#[tauri::command]
+fn exit_app() {
+    std::process::exit(0);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -70,7 +75,8 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, get_file_size, reveal_in_finder])
+        .invoke_handler(tauri::generate_handler![greet, get_file_size, reveal_in_finder, exit_app])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
+

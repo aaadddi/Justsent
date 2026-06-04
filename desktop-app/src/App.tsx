@@ -86,6 +86,17 @@ function App() {
     };
   }, []);
 
+  const isSharingActiveRef = useRef(isSharingActive);
+  const tunnelActiveRef = useRef(tunnelActive);
+
+  useEffect(() => {
+    isSharingActiveRef.current = isSharingActive;
+  }, [isSharingActive]);
+
+  useEffect(() => {
+    tunnelActiveRef.current = tunnelActive;
+  }, [tunnelActive]);
+
   useEffect(() => {
     if (!("__TAURI_INTERNALS__" in window)) return;
 
@@ -98,9 +109,9 @@ function App() {
 
       const windowInstance = getCurrentWindow();
       const unlisten = await windowInstance.onCloseRequested(async (event) => {
-        if (isSharingActive || tunnelActive) {
-          event.preventDefault();
+        event.preventDefault();
 
+        if (isSharingActiveRef.current || tunnelActiveRef.current) {
           const confirmed = await ask(
             "You have active sharing sessions. Closing the app will stop all sharing. Are you sure you want to quit?",
             {
@@ -112,9 +123,10 @@ function App() {
           );
 
           if (confirmed) {
-            unlisten();
-            await windowInstance.close();
+            await invoke("exit_app");
           }
+        } else {
+          await invoke("exit_app");
         }
       });
 
@@ -133,7 +145,7 @@ function App() {
         unlistenFn();
       }
     };
-  }, [isSharingActive, tunnelActive]);
+  }, []);
 
   useEffect(() => {
     if (backendOk !== true) return;
