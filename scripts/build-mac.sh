@@ -87,4 +87,23 @@ else
   cargo tauri build --target aarch64-apple-darwin
 fi
 
+APP_PATH="src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Justsent.app"
+if [ -d "$APP_PATH" ]; then
+  echo "Ad-hoc codesigning the entire app bundle recursively..."
+  # Clean old signature components
+  find "$APP_PATH" -name "_CodeSignature" -exec rm -rf {} + || true
+  # Sign recursively
+  codesign --force --deep --sign - "$APP_PATH"
+  
+  echo "Re-verifying app bundle signature..."
+  codesign --verify --deep --strict --verbose=4 "$APP_PATH"
+  
+  # Re-burn the DMG so it contains the signed app bundle
+  echo "Re-generating signed DMG installer..."
+  DMG_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/dmg"
+  mkdir -p "$DMG_DIR"
+  rm -f "$DMG_DIR/Justsent_0.1.0_aarch64.dmg"
+  hdiutil create -volname "Justsent" -srcfolder "src-tauri/target/aarch64-apple-darwin/release/bundle/macos" -ov -format UDZO "$DMG_DIR/Justsent_0.1.0_aarch64.dmg"
+fi
+
 echo "macOS ARM64 Build completed successfully."

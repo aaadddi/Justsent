@@ -65,6 +65,23 @@ The build pipeline will fail immediately if:
 - **Missing backend binary**: The Go build exited cleanly but did not output `justsent-backend` to the Tauri resources folder.
 - **Missing cloudflared resource**: Downloading or placing the `cloudflared` binary into the resource folder failed.
 
+### Gatekeeper & Quarantine Warning ("Damaged App")
+
+Since the compiled application is ad-hoc signed in the GitHub Actions runner (without a registered Apple Developer Account certificate), macOS applies a security quarantine flag (`com.apple.quarantine`) on the downloaded files, blocking them from execution and displaying a warning that the app is **"damaged and can't be opened"**.
+
+#### To resolve this:
+Open the Terminal and strip the quarantine attribute from the app or disk image before launching it:
+
+```bash
+# Strip quarantine from the .app bundle:
+xattr -cr /path/to/Justsent.app
+
+# Or strip quarantine from the downloaded DMG installer:
+xattr -cr /path/to/JustSent.dmg
+```
+
+Once executed, the application will open normally.
+
 ### Local Replication
 To reproduce the build environment locally to debug issues:
 1. Ensure prerequisites (Go, Node, Rust, Bun) are configured.

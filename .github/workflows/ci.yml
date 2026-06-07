@@ -109,6 +109,8 @@ jobs:
             exit 1
           fi
           cp -R "$APP_PATH" artifacts/JustSent.app
+          # Also compress with ditto to preserve macOS code signatures and resource forks for direct zip downloads
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" artifacts/JustSent.app.zip
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
