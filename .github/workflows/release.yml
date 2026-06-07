@@ -62,7 +62,7 @@ jobs:
       - name: Prepare DMG release asset
         id: assets
         run: |
-          DMG_PATH=$(find desktop-app/src-tauri/target/release/bundle/dmg -name "*.dmg" | head -n 1)
+          DMG_PATH=$(find desktop-app/src-tauri/target -name "*.dmg" | head -n 1)
           if [ -z "$DMG_PATH" ]; then
             echo "Error: DMG file not found!" >&2
             exit 1

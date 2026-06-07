@@ -65,7 +65,7 @@ jobs:
           echo "{\"version\":\"$VERSION\",\"commit\":\"$COMMIT\",\"buildTime\":\"$BUILD_TIME\"}" > artifacts/build-info.json
           
           # Locate and copy DMG
-          DMG_PATH=$(find desktop-app/src-tauri/target/release/bundle/dmg -name "*.dmg" | head -n 1)
+          DMG_PATH=$(find desktop-app/src-tauri/target -name "*.dmg" | head -n 1)
           if [ -z "$DMG_PATH" ]; then
             echo "Error: DMG file not found!" >&2
             exit 1
@@ -73,7 +73,7 @@ jobs:
           cp "$DMG_PATH" artifacts/JustSent.dmg
           
           # Copy .app directory
-          APP_PATH=$(find desktop-app/src-tauri/target/release/bundle/macos -name "*.app" | head -n 1)
+          APP_PATH=$(find desktop-app/src-tauri/target -name "*.app" | head -n 1)
           if [ -z "$APP_PATH" ]; then
             echo "Error: APP directory not found!" >&2
             exit 1
