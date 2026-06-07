@@ -1,9 +1,9 @@
 package db
 
 import (
+	"backend-app/config"
 	"database/sql"
 	"fmt"
-	"os"
 	"path/filepath"
 
 	_ "modernc.org/sqlite"
@@ -31,15 +31,7 @@ func InitDB() error {
 }
 
 func GetDatabasePath() string {
-	dir, err := os.UserConfigDir()
-	if err != nil {
-		return "justsent.db"
-	}
-	appDir := filepath.Join(dir, "JustSent")
-	if err = os.MkdirAll(appDir, 0755); err != nil {
-		return "justsent.db"
-	}
-	return filepath.Join(appDir, "justsent.db")
+	return filepath.Join(config.UserDataDir(), "justsent.db")
 }
 
 func migrate() error {

@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"sync"
 	"time"
@@ -249,7 +250,7 @@ func Delete(token string) bool {
 	if exists {
 		_, err := db.DB.Exec("UPDATE shares SET is_active = 0 WHERE token = ?", token)
 		if err != nil {
-			fmt.Printf("Error marking share %s as inactive in database: %v\n", token, err)
+			slog.Error("Failed to mark share as inactive in database", "token", token, "error", err)
 		}
 		delete(shares, token)
 		return true
@@ -268,7 +269,7 @@ func RecordDownload(token string, ip string) {
 
 	_, err := db.DB.Exec("UPDATE shares SET downloads = downloads + 1 WHERE token = ?", token)
 	if err != nil {
-		fmt.Printf("Error updating downloads count: %v\n", err)
+		slog.Error("Failed to update downloads count", "token", token, "error", err)
 	}
 
 	_, err = db.DB.Exec(`
@@ -276,10 +277,9 @@ func RecordDownload(token string, ip string) {
 		VALUES (?, ?, ?)
 	`, token, ip, time.Now())
 	if err != nil {
-		fmt.Printf("Error inserting downloads history: %v\n", err)
+		slog.Error("Failed to insert downloads history", "token", token, "ip", ip, "error", err)
 	}
 }
-
 func ListHistory() []types.Share {
 	rows, err := db.DB.Query(`
 		SELECT id, token, file_paths, label, primary_name, public_download_url, local_download_url,
@@ -288,7 +288,7 @@ func ListHistory() []types.Share {
 		ORDER BY created_at DESC
 	`)
 	if err != nil {
-		fmt.Printf("Error querying shares history: %v\n", err)
+		slog.Error("Failed to query shares history from database", "error", err)
 		return nil
 	}
 	defer rows.Close()
@@ -307,7 +307,7 @@ func ListHistory() []types.Share {
 			&s.PasswordHash, &s.Note, &s.Downloads, &s.CreatedAt, &expiresAtVal, &isActiveVal,
 		)
 		if err != nil {
-			fmt.Printf("Error scanning history row: %v\n", err)
+			slog.Error("Failed to scan share history row", "error", err)
 			continue
 		}
 

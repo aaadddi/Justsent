@@ -1,71 +1,19 @@
 # Justsent 🚀
 
-Justsent is a premium, secure, and rapid file-sharing desktop application built using **Tauri**, **React (TypeScript)**, and a **Go** backend daemon. Designed with a sleek, minimalist macOS aesthetic, it allows users to transfer files instantly either locally to nearby devices or globally over the internet via secure Cloudflare Tunnels—all with optional password protection and detailed history logs.
+Justsent is a secure, rapid file-sharing desktop application built using **Tauri**, **React (TypeScript)**, and a **Go** backend daemon. It allows users to stream files instantly to nearby devices over the local network, or globally over the internet via secure Cloudflare Tunnels.
 
 ---
 
-## ✨ Features
+## 🛠️ Prerequisites
 
-- **Double-Channel Sharing**:
-  - 🌐 **Internet Sharing**: Generates a secure, temporary Cloudflare tunnel URL so anyone, anywhere can download your files directly from your machine.
-  - 🏡 **Nearby Sharing**: Creates a local IP/port link for high-speed transfers to devices on the same Wi-Fi router.
-- **Privacy & Security first**:
-  - 🔒 **Password Protection**: Enforce password entry for download pages.
-  - 📝 **Custom Notes**: Leave personal notes or download instructions visible on the web share page.
-  - 🛡️ **No Third-Party Hosting**: Your files are streamed directly from your machine. Once you stop sharing, the access tunnel is deleted immediately.
-- **Detailed History & Logs**:
-  - 📊 Track share instances (both active and expired).
-  - 📂 **Reveal in Finder** (with built-in broken path detection).
-  - ⏱️ Collapsible download log histories showing downloader IPs and timestamps.
-  - 🖱️ **"Sharing" Status Badge**: An interactive indicator on the Transfers tab. Clicking it triggers a pulse highlighting effect on all actively shared cards.
+Ensure you have the following installed:
+- **Go** (v1.22+)
+- **Node.js** (v20+) & **Bun** (recommended)
+- **Rust/Cargo** (Tauri compilation toolchain)
 
 ---
 
-## 🏗️ Architecture Overview
-
-Justsent uses a modern **Client-Daemon architecture**:
-
-```
-                  +----------------------------------------+
-                  |               Tauri Client             |
-                  |  (Rust wrapper + React/TS Frontend)    |
-                  +-------------------+--------------------+
-                                      |
-                                      | Tauri Sidecar / IPC
-                                      v
-                  +----------------------------------------+
-                  |               Go Daemon                |
-                  | (Local HTTP Server + SQLite Cache DB)  |
-                  +-------------------+--------------------+
-                                      |
-                    +-----------------+-----------------+
-                    |                                   |
-                    v (Nearby)                          v (Internet)
-         +--------------------+              +--------------------+
-         |   Local Wi-Fi IP   |              | Cloudflare Tunnel  |
-         |  Direct Streaming  |              |    (cloudflared)   |
-         +--------------------+              +--------------------+
-```
-
-1. **Frontend (React & TypeScript)**: An adaptive macOS-style user interface built with custom CSS, responsive navigation, drop-zones, and collapsible log drawers.
-2. **Backend Daemon (Go)**: A lightweight, background-running Go application that handles file reads, serves download pages, writes sharing histories to a local SQLite database, and handles Cloudflare tunnel initialization.
-3. **Rust Tauri Wrapper**: Wraps the frontend UI and orchestrates launch/kill triggers to ensure the Go backend daemon is terminated safely when the window is closed.
-
----
-
-## 🛠️ Getting Started
-
-### Prerequisites
-
-To build and run Justsent locally, you need:
-
-- **Go** (v1.25+ recommended)
-- **Node.js** (v18+) & **Bun** (for faster package execution)
-- **Tauri Prerequisites** (Xcode Command Line Tools for macOS)
-
----
-
-### Installation & Development Setup
+## 💻 Running in Development
 
 1. **Clone the repository**:
    ```bash
@@ -73,39 +21,56 @@ To build and run Justsent locally, you need:
    cd justsent
    ```
 
-2. **Initialize Backend Dependencies**:
+2. **Initialize Go backend dependencies**:
    ```bash
    cd backend
    go mod download
    ```
 
-3. **Install Frontend Dependencies**:
+3. **Install UI dependencies & run**:
    ```bash
    cd ../desktop-app
    bun install
-   ```
-
-4. **Run the App in Development Mode**:
-   Tauri automatically starts both the Go backend sidecar and the React development frontend:
-   ```bash
    bun run tauri:dev
    ```
+   *This starts the Go backend daemon and launches the React client application.*
 
 ---
 
-## 🚀 Building for Production
+## 🚀 Building for Release
 
-To compile a native macOS bundle:
+We provide unified scripts under `scripts/` to automate compiling both the Go backend and packaging the Tauri application.
 
-```bash
-cd desktop-app
-bun run build
-bun run tauri build
-```
-This generates a compiled, optimized, and sandboxed `.app` / `.dmg` installer inside the `src-tauri/target/release/bundle` directory.
+1. Make scripts executable:
+   ```bash
+   chmod +x scripts/*.sh
+   ```
+
+2. Run the release orchestrator:
+   ```bash
+   ./scripts/build-release.sh
+   ```
+   *This automatically detects your operating system, builds the correct target binaries (including lipo universal binaries on macOS), downloads `cloudflared`, bundles assets, and outputs native desktop installers under `desktop-app/src-tauri/target/release/bundle/`.*
 
 ---
 
-## 📄 License
+## 📁 Project Structure
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+- `backend/`: Go daemon source code (server, configuration layer, SQLite db, structured logging).
+- `desktop-app/`: Tauri wrapper source code and React/TypeScript frontend files.
+- `scripts/`: Platform build scripts (`build-backend-mac.sh`, `build-backend-linux.sh`, `build-backend-windows.sh`, `build-release.sh`).
+
+---
+
+## 🚫 Generated Files
+
+The following files are dynamically generated build artifacts and caches that should not be committed to Git:
+
+- **Compiled binaries**: `justsent-backend` and `cloudflared` (placed in `desktop-app/src-tauri/resources/` during build compilation).
+- **Tauri build outputs**: `desktop-app/src-tauri/target/` and packaged installers.
+- **Node build outputs**: `desktop-app/dist/` and `desktop-app/node_modules/`.
+- **Logs**: Structured JSON application logs located in standard OS user data folders or local `logs/` directories.
+
+### How they are recreated:
+- Run `./scripts/build-release.sh` to compile the Go daemon, fetch cloudflared, bundle UI files, and build the release packages.
+- Run `bun run tauri:dev` to launch a local development build (recreates caches and targets).

@@ -23,9 +23,29 @@ import (
 
 func HandleHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	tunnelActive := tunnel.IsRunning()
+	tunnelURL, _ := tunnel.URL()
+
+	tunnelStatus := "inactive"
+	cfStatus := "stopped"
+	if tunnelActive {
+		tunnelStatus = "active"
+		cfStatus = "running"
+	}
+
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":        "ok",
-		"tunnel_active": tunnel.IsRunning(),
+		"status": "ok",
+		"backend": map[string]interface{}{
+			"status": "ok",
+		},
+		"tunnel": map[string]interface{}{
+			"status": tunnelStatus,
+			"url":    tunnelURL,
+		},
+		"cloudflared": map[string]interface{}{
+			"status": cfStatus,
+		},
+		"tunnel_active": tunnelActive,
 	})
 }
 

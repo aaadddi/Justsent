@@ -1,0 +1,88 @@
+name: CI Build
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  ci-build:
+    name: Build macOS ARM64
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+          cache-dependency-path: backend/go.sum
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb', '**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            desktop-app/src-tauri/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run build script
+        run: ./scripts/build-mac.sh
+
+      - name: Prepare Artifacts & Build Info
+        run: |
+          mkdir -p artifacts
+          
+          # Write build-info.json
+          VERSION=$(git describe --tags --always 2>/dev/null || echo "0.1.0")
+          COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+          BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          
+          echo "{\"version\":\"$VERSION\",\"commit\":\"$COMMIT\",\"buildTime\":\"$BUILD_TIME\"}" > artifacts/build-info.json
+          
+          # Locate and copy DMG
+          DMG_PATH=$(find desktop-app/src-tauri/target/release/bundle/dmg -name "*.dmg" | head -n 1)
+          if [ -z "$DMG_PATH" ]; then
+            echo "Error: DMG file not found!" >&2
+            exit 1
+          fi
+          cp "$DMG_PATH" artifacts/JustSent.dmg
+          
+          # Copy .app directory
+          APP_PATH=$(find desktop-app/src-tauri/target/release/bundle/macos -name "*.app" | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            echo "Error: APP directory not found!" >&2
+            exit 1
+          fi
+          cp -R "$APP_PATH" artifacts/JustSent.app
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: justsent-mac-build
+          path: artifacts/
+          retention-days: 14

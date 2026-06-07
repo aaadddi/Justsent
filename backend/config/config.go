@@ -1,19 +1,65 @@
 package config
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"runtime"
 )
 
-const (
-	ServerHost = "localhost"
-	ServerPort = "8787"
-	SecretKey  = "HeHeHe"
+var (
+	ServerHost   = "localhost"
+	ServerPort   = "8787"
+	SecretKey    = "HeHeHe"
+	ResourcesDir = ""
 )
 
+func UserDataDir() string {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		dir = "."
+	}
+	appDir := filepath.Join(dir, "JustSent")
+	_ = os.MkdirAll(appDir, 0755)
+	return appDir
+}
+
+func LoadConfig() error {
+	configPath := filepath.Join(UserDataDir(), "config.json")
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return err
+	}
+	var c ConfigSchema
+	if err := json.Unmarshal(data, &c); err != nil {
+		return err
+	}
+	if c.ServerHost != "" {
+		ServerHost = c.ServerHost
+	}
+	if c.ServerPort != "" {
+		ServerPort = c.ServerPort
+	}
+	if c.SecretKey != "" {
+		SecretKey = c.SecretKey
+	}
+	return nil
+}
+
 func CloudflaredPath() string {
-	// Get target triple for the current running binary
+	// 1. Try to find cloudflared in the resources directory if provided
+	if ResourcesDir != "" {
+		binaryName := "cloudflared"
+		if runtime.GOOS == "windows" {
+			binaryName += ".exe"
+		}
+		path := filepath.Join(ResourcesDir, binaryName)
+		if info, err := os.Stat(path); err == nil && !info.IsDir() {
+			return path
+		}
+	}
+
+	// 2. Try to find cloudflared next to the running executable
 	var triple string
 	switch runtime.GOOS {
 	case "darwin":
@@ -36,7 +82,6 @@ func CloudflaredPath() string {
 		}
 	}
 
-	// 1. Try to find cloudflared with triple suffix in the same directory as the current executable (Tauri bundle sidecar path)
 	if exePath, err := os.Executable(); err == nil {
 		exeDir := filepath.Dir(exePath)
 		sidecarPath := filepath.Join(exeDir, "cloudflared-"+triple)
@@ -44,7 +89,6 @@ func CloudflaredPath() string {
 			return sidecarPath
 		}
 
-		// Also try without triple just in case
 		fallbackPath := filepath.Join(exeDir, "cloudflared")
 		if runtime.GOOS == "windows" {
 			fallbackPath += ".exe"
@@ -54,7 +98,7 @@ func CloudflaredPath() string {
 		}
 	}
 
-	// 2. Fall back to development paths
+	// 3. Fall back to development paths
 	switch runtime.GOOS {
 	case "darwin":
 		return "./bin/mac/cloudflared"

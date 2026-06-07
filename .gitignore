@@ -1,4 +1,35 @@
-node_modules
-dist
-.vscode
+# Node / Frontend
+node_modules/
+dist/
+dist-ssr/
+
+# Go Binaries and Caches
+*.exe
+*.dll
+*.so
+*.dylib
+backend/bin/
+justsent-backend*
+cloudflared*
+
+# Tauri
+desktop-app/src-tauri/target/
+desktop-app/src-tauri/gen/schemas/
+desktop-app/src-tauri/resources/
+
+# OS-specific
 .DS_Store
+Thumbs.db
+
+# IDE Configuration
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Logs & Caches
+logs/
+*.log
+.eslintcache

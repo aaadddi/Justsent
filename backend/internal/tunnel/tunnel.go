@@ -3,7 +3,7 @@ package tunnel
 import (
 	"backend-app/config"
 	"bufio"
-	"fmt"
+	"log/slog"
 	"os/exec"
 	"regexp"
 	"runtime"
@@ -55,7 +55,7 @@ func Start() (*Tunnel, error) {
 		for scanner.Scan() {
 			line := scanner.Text()
 
-			fmt.Println("[cloudflared]", line)
+			slog.Info("cloudflared output", "line", line)
 
 			match := regex.FindString(line)
 			if match != "" {

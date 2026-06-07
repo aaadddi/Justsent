@@ -4,14 +4,23 @@ import (
 	"backend-app/config"
 	"backend-app/internal/db"
 	"backend-app/internal/handlers"
+	"backend-app/internal/logger"
 	"backend-app/internal/share"
 	"backend-app/internal/tunnel"
+	"flag"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+)
+
+var (
+	Version   = "dev"
+	Commit    = "unknown"
+	BuildTime = "unknown"
 )
 
 func enableCORS(next http.HandlerFunc) http.HandlerFunc {
@@ -30,14 +39,50 @@ func enableCORS(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func main() {
+	// Parse CLI flags
+	flag.StringVar(&config.ResourcesDir, "resources-dir", "", "Path to the bundled resources directory")
+	flag.Parse()
+
+	// Detect if running in development mode (no resources directory provided)
+	isDev := config.ResourcesDir == ""
+
+	// Initialize Logger
+	if err := logger.Init(config.UserDataDir(), isDev); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to initialize logger: %v\n", err)
+		os.Exit(1)
+	}
+	defer logger.Close()
+
+	slog.Info("Starting JustSent Backend...",
+		"version", Version,
+		"commit", Commit,
+		"buildTime", BuildTime,
+		"isDev", isDev,
+		"userDataDir", config.UserDataDir(),
+		"resourcesDir", config.ResourcesDir,
+	)
+
+	// Run configuration schema migration
+	if err := config.MigrateConfig(); err != nil {
+		slog.Error("failed to migrate configuration schema", "error", err)
+		os.Exit(1)
+	}
+
+	// Load configuration variables
+	if err := config.LoadConfig(); err != nil {
+		slog.Warn("could not load config.json, using default options", "error", err)
+	}
+
 	// Initialize SQLite DB
 	if err := db.InitDB(); err != nil {
-		panic(fmt.Sprintf("failed to initialize SQLite database: %v", err))
+		slog.Error("failed to initialize SQLite database", "error", err)
+		os.Exit(1)
 	}
 
 	// Load existing shares from database into cache
 	if err := share.Load(); err != nil {
-		panic(fmt.Sprintf("failed to load shares from database: %v", err))
+		slog.Error("failed to load shares from database", "error", err)
+		os.Exit(1)
 	}
 
 	http.HandleFunc("/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
@@ -51,13 +96,19 @@ func main() {
 	http.HandleFunc("/v1/files/check", enableCORS(handlers.HandleCheckFiles))
 	http.HandleFunc("/share/", enableCORS(handlers.HandleDownload))
 
+	http.HandleFunc("/v1/version", enableCORS(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, `{"version":%q,"commit":%q,"buildTime":%q}`, Version, Commit, BuildTime)
+	}))
+
 	// START SERVER IN BACKGROUND
 	go func() {
-		fmt.Printf("Server running on :%s\n", config.ServerPort)
+		slog.Info("Server listening", "host", config.ServerHost, "port", config.ServerPort)
 
 		err := http.ListenAndServe(":"+config.ServerPort, nil)
 		if err != nil {
-			panic(err)
+			slog.Error("HTTP Server execution failed", "error", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -73,7 +124,7 @@ func main() {
 		for range ticker.C {
 			currentPPID := os.Getppid()
 			if currentPPID == 1 || currentPPID != initialPPID {
-				fmt.Println("Parent process terminated. Initiating backend cleanup...")
+				slog.Warn("Parent process terminated. Initiating backend cleanup...")
 				sigChan <- syscall.SIGTERM
 				return
 			}
@@ -82,12 +133,12 @@ func main() {
 
 	// Wait for shutdown signal
 	sig := <-sigChan
-	fmt.Printf("Received signal: %v. Cleaning up tunnel...\n", sig)
+	slog.Info("Received shutdown signal", "signal", sig)
 
 	// Clean up tunnel
 	if err := tunnel.Release(); err != nil {
-		fmt.Printf("Error releasing tunnel: %v\n", err)
+		slog.Error("Error releasing Cloudflare tunnel during cleanup", "error", err)
 	}
 
-	fmt.Println("Backend shutdown complete.")
+	slog.Info("Backend shutdown complete.")
 }

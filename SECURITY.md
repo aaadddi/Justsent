@@ -15,7 +15,7 @@ We actively monitor and support the following versions of Justsent with security
 
 We take the security of Justsent seriously. If you find a security vulnerability, please do **not** open a public GitHub issue. Instead, report it responsibly:
 
-1. **Submit Report**: Send an email detailing the vulnerability to `security@justsent.com` (or contact the repository maintainers directly).
+1. **Submit Report**: Contact the repository maintainers directly.
 2. **Details to Include**:
    - A description of the vulnerability and its potential impact.
    - Detailed step-by-step instructions to reproduce the issue (including proof-of-concept scripts or configurations if applicable).
