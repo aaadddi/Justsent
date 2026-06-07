@@ -64,21 +64,21 @@ jobs:
 
       - name: Verify generated app
         run: |
-          APP=$(find desktop-app/src-tauri/target/release/bundle/macos -name "*.app" | head -n 1)
+          DMG=$(find desktop-app/src-tauri/target -name "*.dmg" | head -n 1)
 
           echo "App: $APP"
 
-          find "$APP/Contents" -maxdepth 1
+          find "$DMG/Contents" -maxdepth 1
 
           echo ""
           echo "Verifying signature..."
 
-          codesign --verify --deep --strict --verbose=4 "$APP"
+          codesign --verify --deep --strict --verbose=4 "$DMG"
 
           echo ""
           echo "Checking Gatekeeper..."
 
-          spctl -a -vvv "$APP"
+          spctl -a -vvv "$DMG"
     
       - name: Prepare Artifacts & Build Info
         run: |
