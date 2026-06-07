@@ -64,21 +64,24 @@ jobs:
 
       - name: Verify generated app
         run: |
-          DMG=$(find desktop-app/src-tauri/target -name "*.dmg" | head -n 1)
+          APP="desktop-app/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Justsent.app"
 
           echo "App: $APP"
 
-          find "$DMG/Contents" -maxdepth 1
+          echo "Contents:"
+          find "$APP/Contents" -maxdepth 1
 
           echo ""
-          echo "Verifying signature..."
-
-          codesign --verify --deep --strict --verbose=4 "$DMG"
+          echo "_CodeSignature:"
+          find "$APP" -name "_CodeSignature"
 
           echo ""
-          echo "Checking Gatekeeper..."
+          echo "codesign:"
+          codesign --verify --deep --strict --verbose=4 "$APP"
 
-          spctl -a -vvv "$DMG"
+          echo ""
+          echo "spctl:"
+          spctl -a -vvv "$APP"
     
       - name: Prepare Artifacts & Build Info
         run: |
@@ -91,13 +94,21 @@ jobs:
           
           echo "{\"version\":\"$VERSION\",\"commit\":\"$COMMIT\",\"buildTime\":\"$BUILD_TIME\"}" > artifacts/build-info.json
           
-          # Locate and copy DMG
-          DMG_PATH=$(find desktop-app/src-tauri/target -name "*.dmg" | head -n 1)
+          # Locate and copy DMG & APP
+          APP_PATH="desktop-app/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Justsent.app"
+          DMG_PATH=$(find desktop-app/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg -name "*.dmg" | head -n 1)
+
           if [ -z "$DMG_PATH" ]; then
             echo "Error: DMG file not found!" >&2
             exit 1
           fi
           cp "$DMG_PATH" artifacts/JustSent.dmg
+
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Error: APP directory not found at $APP_PATH" >&2
+            exit 1
+          fi
+          cp -R "$APP_PATH" artifacts/JustSent.app
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
