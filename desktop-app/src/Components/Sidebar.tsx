@@ -1,16 +1,24 @@
 import React, { type PointerEvent } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { SettingsIcon } from "../assets/icons";
+import { AppTab } from "../types/app";
 
 interface SidebarItemProps {
   icon?: React.ReactNode;
   label: string;
   active?: boolean;
   onClick?: () => void;
+  role?: string;
+  ariaSelected?: boolean;
 }
 
-const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, active, onClick }) => (
-  <button className={`sidebar-item ${active ? "active" : ""}`} onClick={onClick}>
+const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, active, onClick, role = "tab", ariaSelected }) => (
+  <button
+    className={`sidebar-item ${active ? "active" : ""}`}
+    onClick={onClick}
+    role={role}
+    aria-selected={ariaSelected ?? active}
+  >
     <div className="sidebar-item-content">
       <span className="sidebar-icon">{icon}</span>
       <span className="sidebar-label">{label}</span>
@@ -25,8 +33,8 @@ const SidebarSection: React.FC<{ children: React.ReactNode }> = ({ children }) =
 );
 
 interface SidebarProps {
-  currentTab: string;
-  setCurrentTab: (tab: string) => void;
+  currentTab: AppTab;
+  setCurrentTab: (tab: AppTab) => void;
 }
 
 export default function Sidebar({ currentTab, setCurrentTab }: SidebarProps) {
@@ -44,12 +52,12 @@ export default function Sidebar({ currentTab, setCurrentTab }: SidebarProps) {
     <aside className="sidebar" onPointerDown={startWindowDrag}>
       <div className="sidebar-traffic-lights" data-tauri-drag-region></div>
 
-      <div className="sidebar-menu-items">
+      <div className="sidebar-menu-items" role="tablist" aria-label="Main Navigation">
         <SidebarSection>
           <SidebarItem
             label="Transfers"
-            active={currentTab === "transfers"}
-            onClick={() => setCurrentTab("transfers")}
+            active={currentTab === AppTab.Transfers}
+            onClick={() => setCurrentTab(AppTab.Transfers)}
             icon={
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="14" width="18" height="6" rx="1" />
@@ -60,8 +68,8 @@ export default function Sidebar({ currentTab, setCurrentTab }: SidebarProps) {
           />
           <SidebarItem
             label="History"
-            active={currentTab === "history"}
-            onClick={() => setCurrentTab("history")}
+            active={currentTab === AppTab.History}
+            onClick={() => setCurrentTab(AppTab.History)}
             icon={
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
@@ -69,27 +77,16 @@ export default function Sidebar({ currentTab, setCurrentTab }: SidebarProps) {
               </svg>
             }
           />
-          {/* <SidebarItem
-            label="Devices"
-            active={currentTab === "devices"}
-            onClick={() => setCurrentTab("devices")}
-            icon={
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                <line x1="8" y1="21" x2="16" y2="21" />
-                <line x1="12" y1="17" x2="12" y2="21" />
-              </svg>
-            }
-          /> */}
         </SidebarSection>
       </div>
 
       <div className="sidebar-footer">
         <SidebarItem
           label="Settings"
-          active={currentTab === "settings"}
-          onClick={() => setCurrentTab("settings")}
+          active={currentTab === AppTab.Settings}
+          onClick={() => setCurrentTab(AppTab.Settings)}
           icon={<SettingsIcon />}
+          role="link"
         />
       </div>
     </aside>

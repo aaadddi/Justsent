@@ -1,11 +1,6 @@
 import { useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
-
-export type SelectedFile = {
-    name: string;
-    size?: number;
-    path?: string;
-};
+import type { SelectedFile } from "../types/transfer";
 
 type FileDropProps = {
     fileInputRef: React.RefObject<HTMLInputElement | null>;

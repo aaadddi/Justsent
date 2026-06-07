@@ -1,3 +1,5 @@
+import { showConfirm } from "../utils/dialogs";
+
 interface SettingsViewProps {
   themeSetting: "system" | "light" | "dark";
   onThemeChange: (setting: "system" | "light" | "dark") => void;
@@ -6,26 +8,15 @@ interface SettingsViewProps {
 
 export default function SettingsView({ themeSetting, onThemeChange, onClearHistory }: SettingsViewProps) {
   const handleClearHistoryClick = async () => {
-    let confirmed = false;
-    if ("__TAURI_INTERNALS__" in window) {
-      try {
-        const { ask } = await import("@tauri-apps/plugin-dialog");
-        confirmed = await ask(
-          "Are you sure you want to delete ALL sharing history and download logs? This action is permanent and cannot be undone.",
-          {
-            title: "Confirm Delete History",
-            kind: "warning",
-            okLabel: "Clear",
-            cancelLabel: "Cancel",
-          }
-        );
-      } catch (err) {
-        console.error("Failed to show native ask dialog:", err);
-        confirmed = window.confirm("Are you sure you want to delete ALL sharing history and download logs? This action is permanent and cannot be undone.");
+    const confirmed = await showConfirm(
+      "Are you sure you want to delete ALL sharing history and download logs? This action is permanent and cannot be undone.",
+      {
+        title: "Confirm Delete History",
+        kind: "warning",
+        okLabel: "Clear",
+        cancelLabel: "Cancel",
       }
-    } else {
-      confirmed = window.confirm("Are you sure you want to delete ALL sharing history and download logs? This action is permanent and cannot be undone.");
-    }
+    );
 
     if (confirmed) {
       await onClearHistory();

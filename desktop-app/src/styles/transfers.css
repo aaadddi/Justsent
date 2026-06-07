@@ -1,0 +1,1700 @@
+/* Drop Zone */
+.drop-zone {
+  width: 100%;
+  border: 1px dashed rgba(184, 100, 42, 0.25); /* Subtle dashed orange border */
+  border-radius: 16px; /* Smooth rounded corners as per image */
+  min-height: 222px; /* Increased by 20% from 185px */
+  padding: 36px 24px; /* Spacious vertical padding */
+  cursor: pointer;
+  background-color: var(--bg-card); /* White/clean card surface background */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 6px 20px rgba(110, 106, 99, 0.06), 0 1px 4px rgba(110, 106, 99, 0.03); /* Soft, beautiful shadow */
+}
+
+.dark-theme .drop-zone {
+  border-color: rgba(212, 122, 59, 0.28); /* Warm dashed border in dark mode */
+  background-color: #2D2A25; /* Lighter than dark mode window gradient */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); /* Deeper shadow for dark mode contrast */
+}
+
+.drop-zone:hover {
+  background-color: #FFFFFF; /* Slightly brighter background on hover */
+  border-color: rgba(184, 100, 42, 0.6); /* Slightly stronger dashed border on hover */
+  box-shadow: 0 10px 28px rgba(184, 100, 42, 0.06), 0 2px 8px rgba(110, 106, 99, 0.03); /* Elevated shadow on hover */
+}
+
+.dark-theme .drop-zone:hover {
+  background-color: #35322C; /* Slightly brighter background on hover */
+  border-color: rgba(212, 122, 59, 0.65); /* Slightly stronger dashed border on hover */
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.38);
+}
+
+.drop-zone.dragging {
+  border-style: solid; /* Changes to solid active border on dragging */
+  border-color: var(--accent); /* Orange border/glow on drag active */
+  background-color: var(--accent-soft);
+  transform: scale(1.005);
+  box-shadow: 0 4px 24px rgba(184, 100, 42, 0.12);
+}
+
+.drop-zone.large {
+  margin-top: 36px; /* Positioned higher up closer to Transfers title */
+  margin-bottom: auto; /* Push the helper text divider to the bottom */
+}
+
+.drop-zone-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.drop-zone-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: rgba(184, 100, 42, 0.07); /* Light peach/orange circular background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent); /* Orange cloud icon by default */
+  margin-bottom: 12px;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark-theme .drop-zone-icon-wrapper {
+  background-color: rgba(212, 122, 59, 0.12); /* Slightly warmer backdrop in dark mode */
+  color: var(--accent);
+}
+
+.drop-zone:hover .drop-zone-icon-wrapper {
+  color: var(--accent);
+  background-color: rgba(184, 100, 42, 0.14); /* Slightly richer peach on hover */
+  transform: scale(1.05);
+}
+
+.dark-theme .drop-zone:hover .drop-zone-icon-wrapper {
+  color: var(--accent);
+  background-color: rgba(212, 122, 59, 0.18);
+}
+
+.drop-zone-inner svg {
+  width: 28px;
+  height: 28px;
+}
+
+.drop-zone.dragging .drop-zone-icon-wrapper {
+  background-color: var(--accent-soft);
+  color: var(--accent);
+  transform: translateY(-4px);
+}
+
+.drop-zone-title {
+  font-size: 16px; /* Slightly larger, matching layout image scale */
+  font-weight: 700; /* Bold title as per shared image */
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.drop-zone-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  opacity: 0.85;
+  text-align: center;
+}
+
+/* Tunnel Status Badge Pill Style */
+.tunnel-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px 3px 7px; /* Optically balanced padding for dot and label */
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  transition: all 0.15s ease;
+  margin-left: 4px; /* Tighter grouping and alignment next to Transfers title */
+  align-self: center; /* Optically centered relative to title row */
+}
+
+.tunnel-status-badge.active {
+  background-color: rgba(59, 122, 87, 0.08); /* Subtle green background */
+  border: 1px solid rgba(59, 122, 87, 0.22); /* Clearer green border */
+  color: #244b35; /* High contrast green text for improved readability */
+  cursor: pointer;
+}
+
+.dark-theme .tunnel-status-badge.active {
+  background-color: rgba(75, 179, 120, 0.12); /* Subtle green background */
+  border-color: rgba(75, 179, 120, 0.28); /* Clearer border */
+  color: #a2eec0; /* High contrast bright green text */
+}
+
+.tunnel-status-badge.inactive {
+  background-color: rgba(110, 106, 99, 0.07); /* Muted neutral gray background */
+  border: 1px solid rgba(110, 106, 99, 0.2); /* Clearer gray border */
+  color: #4a4742; /* Improved text contrast for neutral status */
+  cursor: default;
+}
+
+.dark-theme .tunnel-status-badge.inactive {
+  background-color: rgba(255, 253, 252, 0.07);
+  border-color: rgba(255, 253, 252, 0.18);
+  color: #dcd7ce; /* Improved text contrast for dark theme inactive status */
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-dot.green {
+  background-color: var(--success);
+  box-shadow: 0 0 0 2px rgba(59, 122, 87, 0.2);
+}
+
+.status-dot.gray {
+  background-color: var(--text-muted);
+  box-shadow: 0 0 0 2px rgba(158, 153, 144, 0.2);
+}
+
+.shield-icon {
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.active-transfers-section {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.recent-transfers-section {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  margin-top: 4px;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.count-badge {
+  font-size: 11px;
+  font-weight: 600;
+  background-color: rgba(184, 100, 42, 0.1);
+  color: var(--accent);
+  padding: 1px 6px;
+  border-radius: 6px;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* File Card Container & Row */
+.file-card-container {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  width: 100%;
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.file-card-container:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--text-muted);
+}
+
+.file-card-container.highlight-active-share {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 16px rgba(184, 100, 42, 0.38) !important;
+  transform: scale(1.008);
+}
+
+.file-card-row {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Color Coded Extensions */
+.file-visual {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 9px;
+  text-transform: uppercase;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.file-visual.ext-pdf {
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.file-visual.ext-zip {
+  background-color: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+}
+
+.file-visual.ext-img {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.file-visual.ext-video {
+  background-color: rgba(139, 92, 246, 0.12);
+  color: #8b5cf6;
+}
+
+.file-visual.ext-audio {
+  background-color: rgba(236, 72, 153, 0.12);
+  color: #ec4899;
+}
+
+.file-visual.ext-default {
+  background-color: var(--accent-soft);
+  color: var(--accent);
+}
+
+.dark-theme .file-visual.ext-pdf {
+  color: #f87171;
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.dark-theme .file-visual.ext-zip {
+  color: #60a5fa;
+  background-color: rgba(59, 130, 246, 0.2);
+}
+
+.dark-theme .file-visual.ext-img {
+  color: #34d399;
+  background-color: rgba(16, 185, 129, 0.2);
+}
+
+.dark-theme .file-visual.ext-video {
+  color: #a78bfa;
+  background-color: rgba(139, 92, 246, 0.2);
+}
+
+.dark-theme .file-visual.ext-audio {
+  color: #f472b6;
+  background-color: rgba(236, 72, 153, 0.2);
+}
+
+.file-meta-col {
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.file-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.file-details {
+  font-size: 11px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bullet-separator {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.lock-icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-secondary);
+}
+
+.state-text.uploading {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.state-text.preparing {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.file-progress-col {
+  flex: 1;
+  min-width: 100px;
+}
+
+.progress-bar-container {
+  height: 6px;
+  background-color: rgba(110, 106, 99, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-fill-bar.uploading {
+  background-color: var(--accent);
+}
+
+.progress-fill-bar.preparing {
+  background-color: #3b82f6;
+}
+
+.file-percent-col {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  width: 36px;
+  text-align: right;
+}
+
+.file-speed-col {
+  font-size: 12px;
+  color: var(--text-secondary);
+  width: 80px;
+  text-align: right;
+}
+
+.file-eta-col {
+  font-size: 12px;
+  color: var(--text-secondary);
+  width: 80px;
+  text-align: right;
+}
+
+.file-actions-col {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.link-action-btn,
+.close-action-btn,
+.more-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background-color: var(--bg-card);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.link-action-btn:hover,
+.close-action-btn:hover,
+.more-action-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.link-action-btn:active,
+.close-action-btn:active,
+.more-action-btn:active {
+  transform: scale(0.95);
+}
+
+.link-action-btn.active {
+  background-color: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent-soft);
+}
+
+.file-card-error {
+  margin-top: 6px;
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 6px;
+  width: 100%;
+}
+
+/* Compact Sharing Layout & Animations */
+.share-btn-compact {
+  height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  background-color: var(--accent);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.share-btn-compact:hover {
+  background-color: var(--accent-hover);
+}
+
+.share-btn-compact:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.share-btn-compact.stop-sharing {
+  background-color: #ef4444;
+}
+
+.share-btn-compact.stop-sharing:hover {
+  background-color: #dc2626;
+}
+
+.clickable-file-name:hover .file-name {
+  color: var(--accent);
+}
+
+/* Compact Drop Zone overrides */
+.drop-zone.compact {
+  min-height: 120px;
+  padding: 16px 20px;
+  border-radius: 12px;
+}
+
+.drop-zone.compact .drop-zone-icon-wrapper {
+  width: 42px;
+  height: 42px;
+  margin-bottom: 8px;
+}
+
+.drop-zone.compact .drop-zone-inner svg {
+  width: 18px;
+  height: 18px;
+}
+
+.drop-zone.compact .drop-zone-title {
+  font-size: 14.5px;
+  margin-bottom: 2px;
+}
+
+.drop-zone.compact .drop-zone-subtitle {
+  font-size: 11px;
+}
+
+/* File Card Center Layout & States */
+.file-card-center-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0 8px;
+}
+
+.badge-button-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.badge-ready {
+  font-size: 11px;
+  font-weight: 600;
+  color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.08);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.badge-completed-green {
+  font-size: 11px;
+  font-weight: 600;
+  color: #10b981;
+  background-color: rgba(16, 185, 129, 0.08);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.share-orange-btn {
+  background-color: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.share-orange-btn:hover {
+  background-color: #a4531d;
+}
+
+.dash-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background-color: var(--bg-card);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: not-allowed;
+  opacity: 0.5;
+  font-size: 12px;
+}
+
+/* Preparing progress style */
+.progress-container-preparing {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.progress-container-preparing .progress-bar-container {
+  flex: 1;
+}
+
+/* Uploading progress style */
+.progress-container-uploading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.upload-status-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.progress-row-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.progress-row-inner .progress-bar-container {
+  flex: 1;
+}
+
+.speed-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  min-width: 80px;
+  text-align: right;
+}
+
+/* Horizontal Progress Layout (Mockup State 03/04) */
+.progress-container-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.progress-container-row .progress-bar-container {
+  flex: 1.5;
+  min-width: 120px;
+}
+
+.progress-container-row .percent-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  width: 36px;
+  text-align: right;
+}
+
+.progress-container-row .speed-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  width: 84px;
+  text-align: right;
+}
+
+.progress-container-row .eta-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  width: 76px;
+  text-align: right;
+}
+
+/* Container Panel Layout for Grouped Rows */
+.file-cards-list,
+.activity-list {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  padding: 0 !important;
+}
+
+/* Grouped row items override */
+.file-cards-list .file-card-container,
+.activity-list .activity-item-row {
+  background-color: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border-light) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  transition: background-color 0.1s ease;
+}
+
+.file-cards-list .file-card-container:hover,
+.activity-list .activity-item-row:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+.file-cards-list .file-card-container:last-child,
+.activity-list .activity-item-row:last-child {
+  border-bottom: none !important;
+}
+
+.file-cards-list .file-card-row {
+  padding: 14px 20px !important;
+}
+
+/* Specific state text colors */
+.state-text.completed {
+  color: var(--success);
+  font-weight: 600;
+}
+.state-text.ready {
+  color: #3b82f6;
+  font-weight: 600;
+}
+.state-text.preparing {
+  color: #3b82f6;
+  font-weight: 600;
+}
+.state-text.uploading {
+  color: var(--accent);
+  font-weight: 600;
+}
+.state-text.sharing {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Badge for active sharing */
+.badge-sharing {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  background-color: var(--accent-soft);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(184, 100, 42, 0.2);
+}
+
+/* Small icon-only share button when Ready */
+.share-icon-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  box-shadow: var(--accent-shadow);
+  flex-shrink: 0;
+}
+
+.share-icon-btn:hover {
+  background-color: var(--accent-hover);
+}
+
+.share-icon-btn:active {
+  transform: scale(0.95);
+}
+
+/* Stop Sharing button when Sharing */
+.stop-share-btn {
+  background-color: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stop-share-btn:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.stop-share-btn:active {
+  transform: scale(0.95);
+}
+
+/* --- Added Filecard Behavior Styles --- */
+.file-card-container.is-sharing {
+  border-color: rgba(184, 100, 42, 0.3);
+}
+
+.file-actions-col.ready-state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.start-share-btn {
+  background-color: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--accent-shadow);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.start-share-btn:hover {
+  background-color: var(--accent-hover);
+  box-shadow: var(--accent-shadow-hover);
+  transform: translateY(-1px);
+}
+
+.start-share-btn:active {
+  transform: translateY(0);
+}
+
+.settings-icon-only-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background-color: var(--bg-card);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.settings-icon-only-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+  transform: rotate(30deg);
+}
+
+.remove-x-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background-color: var(--bg-card);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+
+.remove-x-btn:hover {
+  background-color: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.stop-sharing-red-btn {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.stop-sharing-red-btn:hover {
+  background-color: #dc2626;
+  transform: translateY(-1px);
+}
+
+.stop-sharing-red-btn:active {
+  transform: translateY(0);
+}
+
+.copy-clip-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background-color: var(--bg-card);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.copy-clip-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+/* Tooltip bubble styled beautifully */
+.tooltip-bubble {
+  position: absolute;
+  right: 38px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #1f2937;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 100;
+  animation: tooltipFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tooltip-bubble::after {
+  content: "";
+  position: absolute;
+  right: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 4px 0 4px 4px;
+  border-style: solid;
+  border-color: transparent transparent transparent #1f2937;
+}
+
+.dropdown-toggle-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background-color: var(--bg-card);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dropdown-toggle-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.dropdown-toggle-btn.expanded svg {
+  transform: rotate(180deg);
+}
+
+.dropdown-toggle-btn svg {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* File Card Accordion Dropdown Wrapper & Transitions */
+.file-card-dropdown-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+  border-top: 1px solid transparent;
+  background-color: rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+}
+
+.dark-theme .file-card-dropdown-wrapper {
+  background-color: rgba(255, 255, 255, 0.015);
+}
+
+.file-card-dropdown-wrapper.open {
+  grid-template-rows: 1fr;
+  border-top: 1px solid var(--border-light);
+}
+
+.file-card-dropdown-content {
+  overflow: hidden;
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 20px;
+  transition: padding 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.file-card-dropdown-wrapper.open .file-card-dropdown-content {
+  padding: 16px 20px 20px 20px;
+}
+
+.dropdown-link-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dropdown-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dropdown-link-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.dropdown-link-input {
+  flex: 1;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 12.5px;
+  padding: 0 10px;
+  outline: none;
+  font-family: monospace;
+}
+
+.dropdown-link-input:focus {
+  border-color: var(--accent);
+}
+
+.dropdown-copy-btn {
+  height: 32px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dropdown-copy-btn:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--text-muted);
+}
+
+/* Downloads Section */
+.dropdown-downloads-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.downloads-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.downloads-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.downloads-count-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--accent);
+  background-color: var(--accent-soft);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.downloads-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.downloader-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.downloader-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.downloader-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.downloader-speed {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.downloader-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.downloader-progress-details {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Neon Glow Progress Bars */
+.neon-progress-bar-container {
+  height: 6px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.dark-theme .neon-progress-bar-container {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.neon-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease-out;
+}
+
+/* Neon Blue Glow */
+.neon-progress-fill.neon-blue {
+  background: linear-gradient(90deg, #00f2fe 0%, #4facfe 100%);
+  box-shadow: 0 0 8px rgba(0, 242, 254, 0.6), 0 0 4px rgba(79, 172, 254, 0.4);
+}
+
+/* Neon Green Glow */
+.neon-progress-fill.neon-green {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6), 0 0 4px rgba(5, 150, 105, 0.4);
+}
+
+/* Neon Purple Glow */
+.neon-progress-fill.neon-purple {
+  background: linear-gradient(90deg, #c084fc 0%, #a855f7 100%);
+  box-shadow: 0 0 8px rgba(192, 132, 252, 0.6), 0 0 4px rgba(168, 85, 247, 0.4);
+}
+
+.no-downloads-placeholder {
+  padding: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  background-color: var(--bg-card);
+  border: 1px dashed var(--border-light);
+  border-radius: 8px;
+}
+
+/* Sharing Settings & Options Panel */
+.file-card-settings-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.file-card-settings-wrapper.open {
+  grid-template-rows: 1fr;
+}
+
+.file-card-settings-panel {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.file-card-settings-inner {
+  padding: 16px 20px;
+  background-color: rgba(0, 0, 0, 0.015);
+  border-top: 1px dashed var(--border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dark-theme .file-card-settings-inner {
+  background-color: rgba(255, 255, 255, 0.01);
+}
+
+.settings-panel-header {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.settings-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.settings-toggle-row input[type="checkbox"] {
+  margin-top: 3px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.toggle-label-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toggle-label-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.toggle-label-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.settings-warning-text {
+  font-size: 11px;
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.settings-icon-only-btn.active {
+  background-color: var(--accent-soft);
+  color: var(--accent);
+  border-color: rgba(184, 100, 42, 0.3);
+}
+
+.dropdown-links-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Password Settings Styles */
+.settings-panel-divider {
+  height: 1px;
+  background-color: var(--border-light);
+  margin: 6px 0;
+  border: none;
+}
+
+.settings-inputs-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+  padding-left: 24px;
+  animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.settings-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-input-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.settings-text-input {
+  width: 100%;
+  padding: 8px 12px;
+  padding-right: 36px;
+  font-size: 13px;
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  background-color: rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  outline: none;
+  transition: var(--transition-mac);
+}
+
+.dark-theme .settings-text-input {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.settings-text-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.password-toggle-eye-btn {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: var(--transition-mac);
+}
+
+.password-toggle-eye-btn:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-hover);
+}
+
+.settings-textarea-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  background-color: rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  outline: none;
+  resize: vertical;
+  min-height: 52px;
+  transition: var(--transition-mac);
+}
+
+.dark-theme .settings-textarea-input {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.settings-textarea-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.transfers-helper-text {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-top: 56px; /* Spacing so it does not compete with dropzone */
+  margin-bottom: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-strong); /* Divider line as per shared image */
+  opacity: 0.7; /* Balanced readability */
+  letter-spacing: -0.01em;
+}
+
+.transfers-helper-text svg {
+  margin-right: 6px;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+/* REDESIGNED TRANSFERS CARD (FILECARD) */
+.transfer-file-card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 18px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.transfer-file-card:hover {
+  border-color: var(--border-strong);
+}
+
+.transfer-file-card .file-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.transfer-file-card .file-meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.transfer-file-card .file-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-details-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.file-details-size {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.lock-icon-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.08);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(59, 130, 246, 0.12);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+
+.status-pill.sharing {
+  color: #10b981;
+  background-color: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.12);
+}
+
+.status-pill.sharing .status-dot-xs {
+  background-color: #10b981;
+}
+
+.status-pill.uploading {
+  color: var(--accent);
+  background-color: var(--accent-soft);
+  border-color: rgba(184, 100, 42, 0.12);
+}
+
+.status-pill.uploading .status-dot-xs {
+  background-color: var(--accent);
+}
+
+.status-pill.preparing {
+  color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.12);
+}
+
+.status-pill.preparing .status-dot-xs {
+  background-color: #3b82f6;
+}
+
+.transfer-file-card .file-actions-col {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+}
+
+.transfer-file-card .start-share-btn {
+  background-color: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.transfer-file-card .start-share-btn:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+}
+
+.transfer-file-card .start-share-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.transfer-file-card .settings-icon-only-btn {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.transfer-file-card .settings-icon-only-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.transfer-file-card .settings-icon-only-btn.active {
+  background-color: var(--bg-hover);
+  color: var(--accent);
+  border-color: var(--border-strong);
+}
+
+.transfer-file-card .remove-x-btn {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.transfer-file-card .remove-x-btn:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.05);
+}
+
+.transfer-file-card .stop-sharing-red-btn {
+  background-color: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.transfer-file-card .stop-sharing-red-btn:hover {
+  background-color: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+.transfer-file-card .dropdown-toggle-btn {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.transfer-file-card .dropdown-toggle-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.transfer-file-card .dropdown-toggle-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.transfer-file-card .dropdown-toggle-btn.expanded svg {
+  transform: rotate(180deg);
+}
+
+.transfer-file-card .file-card-settings-wrapper {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  background-color: rgba(110, 106, 99, 0.005);
+  border-top: 0 solid var(--border-light);
+}
+
+.transfer-file-card .file-card-settings-wrapper.open {
+  max-height: 500px;
+  border-top-width: 1px;
+}
+
+.transfer-file-card .file-card-settings-panel {
+  padding: 16px 20px;
+}
+
+.transfer-file-card .file-card-dropdown-wrapper {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  background-color: rgba(110, 106, 99, 0.008);
+  border-top: 0 solid var(--border-light);
+}
+
+.transfer-file-card .file-card-dropdown-wrapper.open {
+  max-height: 600px;
+  border-top-width: 1px;
+}
+
+.transfer-file-card .file-card-dropdown-content {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.disconnect-btn {
+  margin-top: 8px;
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  transition: background-color 0.15s ease;
+}
+
+.disconnect-btn:hover {
+  background-color: rgba(239, 68, 68, 0.08);
+}
+

@@ -1,0 +1,146 @@
+/* Sidebar Styles */
+.sidebar {
+  width: 215px;
+  /* Maximum native macOS utility width */
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border-strong);
+  box-shadow: 1px 0 10px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  user-select: none;
+  overflow-y: auto;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  z-index: 10;
+}
+
+.sidebar-traffic-lights {
+  height: 36px;
+  flex: 0 0 auto;
+}
+
+.sidebar-brand-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 20px 16px 20px;
+}
+
+.brand-logo-img {
+  width: 100px;
+  height: 30px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 600;
+  /* Medium-weight app name */
+  color: var(--text-primary);
+  letter-spacing: -0.019em;
+}
+
+.sidebar-menu-items {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 4px 0;
+}
+
+.sidebar-section-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 8px;
+}
+
+.sidebar-item {
+  height: 36px;
+  /* Breathable but compact height */
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  cursor: default;
+  border-radius: 8px;
+  width: 100%;
+  color: var(--text-secondary);
+  transition: background-color 150ms ease, color 150ms ease, opacity 150ms ease;
+  opacity: 0.85;
+  /* Muted inactive state */
+}
+
+.sidebar-item:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+  opacity: 1;
+}
+
+.sidebar-item.active {
+  background-color: var(--accent-soft);
+  color: var(--accent);
+  opacity: 1;
+}
+
+.sidebar-item.active .sidebar-icon,
+.sidebar-item.active .sidebar-label {
+  color: var(--accent);
+}
+
+.sidebar-item-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  color: inherit;
+}
+
+.sidebar-icon svg {
+  display: block;
+}
+
+.sidebar-label {
+  font-size: 13.5px;
+  font-weight: 400;
+  /* Regular weight for inactive */
+  color: inherit;
+}
+
+.sidebar-item.active .sidebar-label {
+  font-weight: 500;
+  /* Medium font weight for active */
+}
+
+.sidebar-footer {
+  padding: 12px 8px;
+  margin-top: auto;
+  border-top: none;
+}
+
+/* Very subtle divider line above Settings */
+.sidebar-footer::before {
+  content: "";
+  display: block;
+  height: 1px;
+  background-color: var(--border-light);
+  margin: 0 12px 12px 12px;
+}
+
+.sidebar-footer .sidebar-item {
+  opacity: 0.7;
+  /* Slightly more muted footer item */
+}
+
+.sidebar-footer .sidebar-item:hover {
+  opacity: 1;
+}

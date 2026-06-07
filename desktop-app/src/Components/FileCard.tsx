@@ -1,30 +1,8 @@
 import { useState, useEffect } from "react";
 import { formatFileSize, getExtension } from "../utils/fileFormatting";
 import { SettingsIcon } from "../assets/icons";
-import { type TransferStats, disconnectDownloader } from "../lib/backend";
-
-export type StatefulFile = {
-  id: string;
-  name: string;
-  size?: number;
-  path?: string;
-  isSharing: boolean;
-  shareLink: string | null;
-  localShareLink: string | null;
-  shareInternet: boolean;
-  shareNearby: boolean;
-  shareError: string | null;
-  shareCreating: boolean;
-  isActionsOpen: boolean;
-  isDownloading?: boolean;
-  bytesWritten?: number;
-  speed?: number;
-  isCompleted?: boolean;
-  activeDownloads?: TransferStats[];
-  passwordProtected: boolean;
-  passwordValue: string;
-  noteValue: string;
-};
+import { disconnectDownloader } from "../lib/backend";
+import type { StatefulFile } from "../types/transfer";
 
 type FileCardProps = {
   file: StatefulFile;
@@ -413,21 +391,6 @@ export default function FileCard({
                           type="button"
                           className="disconnect-btn"
                           onClick={() => handleDisconnect(dl.id)}
-                          style={{
-                            marginTop: "8px",
-                            alignSelf: "flex-start",
-                            background: "none",
-                            border: "none",
-                            color: "#ef4444",
-                            cursor: "pointer",
-                            padding: "2px 6px",
-                            fontSize: "11px",
-                            fontWeight: 600,
-                            borderRadius: "4px",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            transition: "background-color 0.15s ease"
-                          }}
                         >
                           Disconnect
                         </button>
