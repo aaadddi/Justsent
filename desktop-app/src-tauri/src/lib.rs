@@ -2,10 +2,6 @@
 use tauri_plugin_shell::ShellExt;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
 
 #[tauri::command]
 fn get_file_size(path: String) -> Result<u64, String> {
@@ -75,7 +71,7 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, get_file_size, reveal_in_finder, exit_app])
+        .invoke_handler(tauri::generate_handler![get_file_size, reveal_in_finder, exit_app])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

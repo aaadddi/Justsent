@@ -47,6 +47,23 @@ export type CreateShareResponse = {
   note?: string;
 };
 
+type BackendCreateShareResponse = {
+  token?: string;
+  Token?: string;
+  download_url?: string;
+  PublicDownloadURL?: string;
+  local_download_url?: string;
+  LocalDownloadURL?: string;
+  share_id?: number;
+  ShareID?: number;
+  public_base_url?: string;
+  PublicBaseURL?: string;
+  password?: string;
+  Password?: string;
+  note?: string;
+  Note?: string;
+};
+
 export async function createShare(body: CreateShareRequest): Promise<CreateShareResponse> {
   const base = getBackendBaseUrl().replace(/\/$/, "");
   const res = await fetch(`${base}/v1/shares`, {
@@ -57,15 +74,15 @@ export async function createShare(body: CreateShareRequest): Promise<CreateShare
   if (!res.ok) {
     throw new Error(await parseError(res));
   }
-  const item = await res.json();
+  const item = (await res.json()) as BackendCreateShareResponse;
   return {
-    token: item.token !== undefined ? item.token : item.Token,
-    download_url: item.download_url !== undefined ? item.download_url : item.PublicDownloadURL,
-    local_download_url: item.local_download_url !== undefined ? item.local_download_url : item.LocalDownloadURL,
-    share_id: item.share_id !== undefined ? item.share_id : item.ShareID,
-    public_base_url: item.public_base_url !== undefined ? item.public_base_url : item.PublicBaseURL,
-    password: item.password !== undefined ? item.password : item.Password,
-    note: item.note !== undefined ? item.note : item.Note,
+    token: item.token ?? item.Token ?? "",
+    download_url: item.download_url ?? item.PublicDownloadURL ?? "",
+    local_download_url: item.local_download_url ?? item.LocalDownloadURL ?? "",
+    share_id: item.share_id ?? item.ShareID ?? 0,
+    public_base_url: item.public_base_url ?? item.PublicBaseURL ?? "",
+    password: item.password ?? item.Password,
+    note: item.note ?? item.Note,
   };
 }
 
@@ -96,35 +113,80 @@ export type ShareListItem = {
   download_history?: DownloadHistoryItem[];
 };
 
+type BackendShareItem = {
+  id?: number;
+  ID?: number;
+  token?: string;
+  Token?: string;
+  created_at?: string;
+  CreatedAt?: string;
+  label?: string | null;
+  Label?: string | null;
+  download_url?: string;
+  PublicDownloadURL?: string;
+  local_download_url?: string;
+  LocalDownloadURL?: string;
+  file_count?: number;
+  FileCount?: number;
+  total_size?: number;
+  TotalSize?: number;
+  primary_name?: string;
+  PrimaryName?: string;
+  recipient_summary?: string | null;
+  RecipientSummary?: string | null;
+  password?: string;
+  Password?: string;
+  note?: string;
+  Note?: string;
+  file_paths?: string[];
+  FilePaths?: string[];
+  downloads?: number;
+  Downloads?: number;
+  is_active?: boolean;
+  IsActive?: boolean;
+  expires_at?: string | null;
+  ExpiresAt?: string | null;
+  is_internet?: boolean;
+  IsInternet?: boolean;
+  is_lan?: boolean;
+  IsLAN?: boolean;
+  download_history?: DownloadHistoryItem[];
+  DownloadHistory?: DownloadHistoryItem[];
+};
+
+function mapShareItem(item: BackendShareItem): ShareListItem {
+  return {
+    id: item.id ?? item.ID ?? 0,
+    token: item.token ?? item.Token ?? "",
+    created_at: item.created_at ?? item.CreatedAt ?? "",
+    label: item.label !== undefined ? item.label : (item.Label ?? null),
+    download_url: item.download_url ?? item.PublicDownloadURL ?? "",
+    local_download_url: item.local_download_url ?? item.LocalDownloadURL ?? "",
+    file_count: item.file_count ?? item.FileCount ?? 0,
+    total_size: item.total_size ?? item.TotalSize ?? 0,
+    primary_name: item.primary_name ?? item.PrimaryName ?? "",
+    recipient_summary: item.recipient_summary !== undefined ? item.recipient_summary : (item.RecipientSummary ?? null),
+    password: item.password ?? item.Password,
+    note: item.note ?? item.Note,
+    file_paths: item.file_paths ?? item.FilePaths ?? [],
+    downloads: item.downloads ?? item.Downloads ?? 0,
+    is_active: item.is_active ?? item.IsActive ?? false,
+    expires_at: item.expires_at !== undefined ? item.expires_at : (item.ExpiresAt ?? null),
+    is_internet: item.is_internet ?? item.IsInternet ?? false,
+    is_lan: item.is_lan ?? item.IsLAN ?? false,
+    download_history: item.download_history ?? item.DownloadHistory ?? [],
+  };
+}
+
 export async function listShares(): Promise<{ shares: ShareListItem[]; tunnelActive: boolean }> {
   const base = getBackendBaseUrl().replace(/\/$/, "");
   const res = await fetch(`${base}/v1/shares`);
   if (!res.ok) {
     throw new Error(await parseError(res));
   }
-  const data = await res.json();
+  const data = (await res.json()) as { shares?: BackendShareItem[]; tunnel_active?: boolean };
   const sharesList = data.shares || [];
-  const mapped = sharesList.map((item: any) => ({
-    id: item.id !== undefined ? item.id : item.ID,
-    token: item.token !== undefined ? item.token : item.Token,
-    created_at: item.created_at !== undefined ? item.created_at : item.CreatedAt,
-    label: item.label !== undefined ? item.label : item.Label,
-    download_url: item.download_url !== undefined ? item.download_url : item.PublicDownloadURL,
-    local_download_url: item.local_download_url !== undefined ? item.local_download_url : item.LocalDownloadURL,
-    file_count: item.file_count !== undefined ? item.file_count : item.FileCount,
-    total_size: item.total_size !== undefined ? item.total_size : item.TotalSize,
-    primary_name: item.primary_name !== undefined ? item.primary_name : item.PrimaryName,
-    recipient_summary: item.recipient_summary !== undefined ? item.recipient_summary : item.RecipientSummary,
-    password: item.password !== undefined ? item.password : item.Password,
-    note: item.note !== undefined ? item.note : item.Note,
-    file_paths: item.file_paths !== undefined ? item.file_paths : (item.FilePaths || []),
-    downloads: item.downloads !== undefined ? item.downloads : (item.Downloads || 0),
-    is_active: item.is_active !== undefined ? item.is_active : (item.IsActive ?? false),
-    expires_at: item.expires_at !== undefined ? item.expires_at : item.ExpiresAt,
-    is_internet: item.is_internet !== undefined ? item.is_internet : (item.IsInternet ?? false),
-    is_lan: item.is_lan !== undefined ? item.is_lan : (item.IsLAN ?? false),
-    download_history: item.download_history !== undefined ? item.download_history : (item.DownloadHistory || []),
-  }));
+  const mapped = sharesList.map(mapShareItem);
   return {
     shares: mapped,
     tunnelActive: data.tunnel_active ?? false,

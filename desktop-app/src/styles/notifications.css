@@ -1,0 +1,27 @@
+/* Status Bar */
+.status-bar {
+  height: 36px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border-strong);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.status-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.dot.active {
+  background-color: var(--success);
+}

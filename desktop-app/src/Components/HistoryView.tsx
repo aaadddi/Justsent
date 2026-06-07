@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { formatFileSize, getExtension } from "../utils/fileFormatting";
 import { checkFiles, deleteShareHistory, type ShareListItem } from "../lib/backend";
 import { invoke } from "@tauri-apps/api/core";
+import { showConfirm } from "../utils/dialogs";
 
 type HistoryViewProps = {
   items: ShareListItem[];
@@ -99,7 +100,13 @@ export default function HistoryView({ items, loading, onReShare, onRefresh, onGo
   }, [items]);
 
   const handleDeleteHistory = async (token: string) => {
-    if (window.confirm("Are you sure you want to delete this share from history?")) {
+    const confirmed = await showConfirm("Are you sure you want to delete this share from history?", {
+      title: "Delete Share History",
+      okLabel: "Delete",
+      cancelLabel: "Cancel",
+      kind: "warning",
+    });
+    if (confirmed) {
       try {
         await deleteShareHistory(token);
         onRefresh();
@@ -110,7 +117,13 @@ export default function HistoryView({ items, loading, onReShare, onRefresh, onGo
   };
 
   const handleDeleteGroupHistory = async (group: ShareGroup) => {
-    if (window.confirm("Are you sure you want to delete all sharing history for these files?")) {
+    const confirmed = await showConfirm("Are you sure you want to delete all sharing history for these files?", {
+      title: "Delete Group History",
+      okLabel: "Delete All",
+      cancelLabel: "Cancel",
+      kind: "warning",
+    });
+    if (confirmed) {
       try {
         for (const share of group.shares) {
           await deleteShareHistory(share.token);
