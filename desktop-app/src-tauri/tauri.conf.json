@@ -42,9 +42,8 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": [
-      "bin/justsent-backend",
-      "bin/cloudflared"
+    "resources": [
+      "resources/**/*"
     ]
   }
 }
