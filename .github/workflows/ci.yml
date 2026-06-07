@@ -52,7 +52,34 @@ jobs:
 
       - name: Run build script
         run: ./scripts/build-mac.sh
+      
+      - name: Inspect build outputs
+        run: |
+          echo "Apps:"
+          find desktop-app/src-tauri/target -name "*.app"
 
+          echo ""
+          echo "DMGs:"
+          find desktop-app/src-tauri/target -name "*.dmg"
+
+      - name: Verify generated app
+        run: |
+          APP=$(find desktop-app/src-tauri/target/release/bundle/macos -name "*.app" | head -n 1)
+
+          echo "App: $APP"
+
+          find "$APP/Contents" -maxdepth 1
+
+          echo ""
+          echo "Verifying signature..."
+
+          codesign --verify --deep --strict --verbose=4 "$APP"
+
+          echo ""
+          echo "Checking Gatekeeper..."
+
+          spctl -a -vvv "$APP"
+    
       - name: Prepare Artifacts & Build Info
         run: |
           mkdir -p artifacts
@@ -71,14 +98,6 @@ jobs:
             exit 1
           fi
           cp "$DMG_PATH" artifacts/JustSent.dmg
-          
-          # Copy .app directory
-          APP_PATH=$(find desktop-app/src-tauri/target -name "*.app" | head -n 1)
-          if [ -z "$APP_PATH" ]; then
-            echo "Error: APP directory not found!" >&2
-            exit 1
-          fi
-          cp -R "$APP_PATH" artifacts/JustSent.app
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
