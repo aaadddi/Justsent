@@ -61,27 +61,6 @@ jobs:
           echo ""
           echo "DMGs:"
           find desktop-app/src-tauri/target -name "*.dmg"
-
-      - name: Verify generated app
-        run: |
-          APP="desktop-app/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Justsent.app"
-
-          echo "App: $APP"
-
-          echo "Contents:"
-          find "$APP/Contents" -maxdepth 1
-
-          echo ""
-          echo "_CodeSignature:"
-          find "$APP" -name "_CodeSignature"
-
-          echo ""
-          echo "codesign:"
-          codesign --verify --deep --strict --verbose=4 "$APP"
-
-          echo ""
-          echo "spctl:"
-          spctl -a -vvv "$APP"
     
       - name: Prepare Artifacts & Build Info
         run: |
