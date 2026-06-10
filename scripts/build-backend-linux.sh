@@ -26,7 +26,7 @@ BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 LDFLAGS="-X main.Version=$VERSION -X main.Commit=$COMMIT -X main.BuildTime=$BUILD_TIME"
 
 cd backend
-GOOS=linux GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o "../$RESOURCES_DIR/justsent-backend" cmd/justsent/main.go
+GOOS=linux GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o "../$RESOURCES_DIR/justsent-backend" ./cmd/justsent
 cd ..
 
 # Copy default config template to resources/config/config.json

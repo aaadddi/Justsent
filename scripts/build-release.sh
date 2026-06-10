@@ -18,7 +18,13 @@ case "$OS_NAME" in
     ./scripts/build-backend-linux.sh
     ;;
   CYGWIN*|MINGW*|MSYS*)
-    ./scripts/build-backend-windows.sh
+    if command -v pwsh &>/dev/null; then
+      pwsh -File scripts/build-backend-windows.ps1
+    elif command -v powershell &>/dev/null; then
+      powershell -ExecutionPolicy Bypass -File scripts/build-backend-windows.ps1
+    else
+      ./scripts/build-backend-windows.sh
+    fi
     ;;
   *)
     echo "Unsupported OS for building release: $OS_NAME"

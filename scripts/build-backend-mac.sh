@@ -36,8 +36,8 @@ fi
 if [ "$ARCH" = "universal" ]; then
   echo "Building Universal macOS backend..."
   cd backend
-  GOOS=darwin GOARCH=arm64 go build -ldflags "$LDFLAGS" -o "../$RESOURCES_DIR/justsent-backend-arm64" cmd/justsent/main.go
-  GOOS=darwin GOARCH=amd64 go build -ldflags "$LDFLAGS" -o "../$RESOURCES_DIR/justsent-backend-amd64" cmd/justsent/main.go
+  GOOS=darwin GOARCH=arm64 go build -ldflags "$LDFLAGS" -o "../$RESOURCES_DIR/justsent-backend-arm64" ./cmd/justsent
+  GOOS=darwin GOARCH=amd64 go build -ldflags "$LDFLAGS" -o "../$RESOURCES_DIR/justsent-backend-amd64" ./cmd/justsent
   cd ..
   lipo -create "$RESOURCES_DIR/justsent-backend-arm64" "$RESOURCES_DIR/justsent-backend-amd64" -output "$RESOURCES_DIR/justsent-backend"
   rm "$RESOURCES_DIR/justsent-backend-arm64" "$RESOURCES_DIR/justsent-backend-amd64"
@@ -73,7 +73,7 @@ else
 
   echo "Building Go backend for macOS ($GOARCH)..."
   cd backend
-  GOOS=darwin GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o "../$RESOURCES_DIR/justsent-backend" cmd/justsent/main.go
+  GOOS=darwin GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o "../$RESOURCES_DIR/justsent-backend" ./cmd/justsent
   cd ..
 
   # Fetch cloudflared

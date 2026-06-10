@@ -16,7 +16,6 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "macOSPrivateApi": true,
     "windows": [
       {
         "title": "",
@@ -24,7 +23,7 @@
         "height": 560,
         "resizable": true,
         "fullscreen": false,
-        "titleBarStyle": "Overlay",
+        "decorations": false,
         "transparent": true
       }
     ],

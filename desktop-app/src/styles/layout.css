@@ -2,16 +2,112 @@
   height: 30px;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding: 0 24px;
-
   -webkit-app-region: drag;
   cursor: default;
   user-select: none;
   flex: 0 0 auto;
   position: relative;
   background: transparent;
+  width: 100%;
 }
+
+.titlebar.is-mac {
+  justify-content: flex-start;
+  padding: 0 16px;
+}
+
+.titlebar.is-win {
+  justify-content: flex-end;
+  padding: 0;
+}
+
+.titlebar-controls {
+  display: flex;
+  align-items: center;
+  -webkit-app-region: no-drag;
+}
+
+/* macOS Traffic Lights */
+.mac-controls {
+  gap: 8px;
+}
+
+.mac-controls .control-btn {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: transparent;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.mac-controls:hover .control-btn {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.mac-close {
+  background-color: #ff5f56;
+}
+.mac-close:hover {
+  background-color: #e0443e;
+}
+
+.mac-minimize {
+  background-color: #ffbd2e;
+}
+.mac-minimize:hover {
+  background-color: #dfa224;
+}
+
+.mac-maximize {
+  background-color: #27c93f;
+}
+.mac-maximize:hover {
+  background-color: #1aab2f;
+}
+
+/* Windows Controls */
+.win-controls {
+  height: 100%;
+}
+
+.win-controls .control-btn {
+  width: 46px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color 100ms ease, color 100ms ease;
+}
+
+.win-controls .control-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.win-controls .win-close:hover {
+  background-color: #e81123 !important;
+  color: #ffffff !important;
+}
+
+.win-controls .win-close:active {
+  background-color: #f1707a !important;
+  color: #ffffff !important;
+}
+
+.win-controls .control-btn svg {
+  pointer-events: none;
+}
+
 
 .toolbar-title {
   position: absolute;

@@ -3,6 +3,7 @@ package tunnel
 import (
 	"backend-app/config"
 	"bufio"
+	"fmt"
 	"log/slog"
 	"os/exec"
 	"regexp"
@@ -21,7 +22,8 @@ func cleanupOldTunnels() {
 		// -9 sends SIGKILL, -f matches the full command line
 		_ = exec.Command("pkill", "-9", "-f", "cloudflared.*"+config.ServerPort).Run()
 	} else if runtime.GOOS == "windows" {
-		_ = exec.Command("taskkill", "/F", "/IM", "cloudflared.exe").Run()
+		// Kill by port rather than all cloudflared.exe instances to avoid disrupting other apps
+		_ = exec.Command("cmd", "/C", fmt.Sprintf("for /f \"tokens=5\" %%a in ('netstat -aon ^| findstr :%s') do taskkill /F /PID %%a", config.ServerPort)).Run()
 	}
 }
 

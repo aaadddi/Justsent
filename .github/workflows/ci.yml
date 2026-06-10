@@ -10,8 +10,11 @@ on:
 
 jobs:
   ci-build:
-    name: Build macOS ARM64
-    runs-on: macos-latest
+    name: Build on ${{ matrix.platform }}
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      matrix:
+        platform: [macos-latest, windows-latest]
 
     steps:
       - name: Checkout repository
@@ -23,10 +26,15 @@ jobs:
           go-version: 'stable'
           cache-dependency-path: backend/go.sum
 
-      - name: Set up Rust
+      - name: Set up Rust (macOS)
+        if: matrix.platform == 'macos-latest'
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin
+
+      - name: Set up Rust (Windows)
+        if: matrix.platform == 'windows-latest'
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -50,10 +58,12 @@ jobs:
             desktop-app/src-tauri/target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Run build script
+      - name: Run macOS build script
+        if: matrix.platform == 'macos-latest'
         run: ./scripts/build-mac.sh
       
-      - name: Inspect build outputs
+      - name: Inspect macOS build outputs
+        if: matrix.platform == 'macos-latest'
         run: |
           echo "Apps:"
           find desktop-app/src-tauri/target -name "*.app"
@@ -62,7 +72,8 @@ jobs:
           echo "DMGs:"
           find desktop-app/src-tauri/target -name "*.dmg"
     
-      - name: Prepare Artifacts & Build Info
+      - name: Prepare macOS Artifacts & Build Info
+        if: matrix.platform == 'macos-latest'
         run: |
           mkdir -p artifacts
           
@@ -91,9 +102,55 @@ jobs:
           # Also compress with ditto to preserve macOS code signatures and resource forks for direct zip downloads
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" artifacts/JustSent.app.zip
 
-      - name: Upload Build Artifacts
+      - name: Upload macOS Build Artifacts
+        if: matrix.platform == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
           name: justsent-mac-build
           path: artifacts/
+          retention-days: 14
+
+      - name: Run Windows build script
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          ./scripts/build-backend-windows.ps1
+          cd desktop-app
+          bun install
+          bunx tauri build
+
+      - name: Prepare Windows Artifacts
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts-win | Out-Null
+          
+          $Version = "0.1.0"
+          try { $Version = (git describe --tags --always) } catch {}
+          $Commit = "unknown"
+          try { $Commit = (git rev-parse --short HEAD) } catch {}
+          $BuildTime = (Get-Date -UFormat "%Y-%m-%dT%H:%M:%SZ")
+          
+          @{
+              version = $Version
+              commit = $Commit
+              buildTime = $BuildTime
+          } | ConvertTo-Json | Set-Content -Path artifacts-win\build-info.json -Force
+
+          # Copy installers
+          $MsiPath = Get-ChildItem -Path desktop-app\src-tauri\target\release\bundle\msi\*.msi | Select-Object -First 1
+          if ($MsiPath) {
+              Copy-Item $MsiPath.FullName -Destination artifacts-win\JustSent.msi -Force
+          }
+          $NsisPath = Get-ChildItem -Path desktop-app\src-tauri\target\release\bundle\nsis\*.exe | Select-Object -First 1
+          if ($NsisPath) {
+              Copy-Item $NsisPath.FullName -Destination artifacts-win\JustSent-Setup.exe -Force
+          }
+
+      - name: Upload Windows Build Artifacts
+        if: matrix.platform == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: justsent-windows-build
+          path: artifacts-win/
           retention-days: 14

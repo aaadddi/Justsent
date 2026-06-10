@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"syscall"
 	"time"
 )
 
@@ -114,7 +113,7 @@ func main() {
 
 	// Channel to listen for signals
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigChan, os.Interrupt)
 
 	// Monitor parent PID to detect if parent process (Tauri app) exited and orphaned us
 	go func() {
@@ -122,10 +121,9 @@ func main() {
 		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
 		for range ticker.C {
-			currentPPID := os.Getppid()
-			if currentPPID == 1 || currentPPID != initialPPID {
+			if !isParentAlive(initialPPID) {
 				slog.Warn("Parent process terminated. Initiating backend cleanup...")
-				sigChan <- syscall.SIGTERM
+				sigChan <- os.Interrupt
 				return
 			}
 		}
