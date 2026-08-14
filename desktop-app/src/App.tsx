@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import "./styles/index.css";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
@@ -10,6 +11,11 @@ import HistoryPage from "./pages/HistoryPage";
 import SettingsPage from "./pages/SettingsPage";
 
 function AppContent() {
+  const [isMac, setIsMac] = useState(true);
+
+  useEffect(() => {
+    setIsMac(navigator.userAgent.includes("Macintosh"));
+  }, []);
   const {
     currentTab,
     setCurrentTab,
@@ -28,7 +34,7 @@ function AppContent() {
   } = useTheme(backendOk);
 
   return (
-    <div className={`app-container ${isDark ? "dark-theme" : "light-theme"}`}>
+    <div className={`app-container ${isDark ? "dark-theme" : "light-theme"} ${isMac ? "is-mac" : "is-win"}`}>
       <FileDrop fileInputRef={fileInputRef} onFilesAdded={handleFilesAdded} />
 
       <Sidebar currentTab={currentTab} setCurrentTab={setCurrentTab} />

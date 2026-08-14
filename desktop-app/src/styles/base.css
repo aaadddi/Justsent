@@ -40,6 +40,11 @@ body {
   position: relative;
 }
 
+.is-win.app-container {
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+}
+
 .app-container::before {
   content: "";
   position: absolute;

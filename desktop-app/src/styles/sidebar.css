@@ -16,8 +16,15 @@
 }
 
 .sidebar-traffic-lights {
-  height: 36px;
+  height: 14px;
   flex: 0 0 auto;
+}
+
+.is-mac .sidebar-traffic-lights {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
 }
 
 .sidebar-brand-wrapper {

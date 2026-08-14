@@ -1,0 +1,12 @@
+{
+  "app": {
+    "macOSPrivateApi": true,
+    "windows": [
+      {
+        "label": "main",
+        "decorations": true,
+        "titleBarStyle": "Overlay"
+      }
+    ]
+  }
+}

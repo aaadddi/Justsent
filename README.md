@@ -52,6 +52,11 @@ We provide unified scripts under `scripts/` to automate compiling both the Go ba
    ```
    *This automatically detects your operating system, builds the correct target binaries (including lipo universal binaries on macOS), downloads `cloudflared`, bundles assets, and outputs native desktop installers under `desktop-app/src-tauri/target/release/bundle/`.*
 
+   Alternatively, if you've already compiled the backend and only want to package the frontend/Tauri app, navigate to `desktop-app` and run:
+   ```bash
+   bun run tauri:build
+   ```
+
 ---
 
 ## 📁 Project Structure

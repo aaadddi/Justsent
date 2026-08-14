@@ -1,5 +1,7 @@
 use tauri::Manager;
 
+mod platform;
+
 struct BackendState(std::sync::Mutex<Option<std::process::Child>>);
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -13,36 +15,7 @@ fn get_file_size(path: String) -> Result<u64, String> {
 
 #[tauri::command]
 fn reveal_in_finder(path: String) -> Result<(), String> {
-    #[cfg(target_os = "macos")]
-    {
-        std::process::Command::new("open")
-            .arg("-R")
-            .arg(&path)
-            .spawn()
-            .map(|_| ())
-            .map_err(|e| e.to_string())
-    }
-    #[cfg(target_os = "windows")]
-    {
-        std::process::Command::new("explorer")
-            .arg("/select,")
-            .arg(&path)
-            .spawn()
-            .map(|_| ())
-            .map_err(|e| e.to_string())
-    }
-    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
-    {
-        let parent = std::path::Path::new(&path)
-            .parent()
-            .map(|p| p.to_string_lossy().into_owned())
-            .unwrap_or(path);
-        std::process::Command::new("xdg-open")
-            .arg(&parent)
-            .spawn()
-            .map(|_| ())
-            .map_err(|e| e.to_string())
-    }
+    platform::reveal_in_finder(&path)
 }
 
 #[tauri::command]
@@ -63,10 +36,7 @@ pub fn run() {
                     let resource_dir = app.path().resource_dir()
                         .map_err(|e| format!("Failed to resolve resource directory: {}", e))?;
                     
-                    #[cfg(target_os = "windows")]
-                    let backend_path = resource_dir.join("resources").join("justsent-backend.exe");
-                    #[cfg(not(target_os = "windows"))]
-                    let backend_path = resource_dir.join("resources").join("justsent-backend");
+                    let backend_path = resource_dir.join("resources").join(platform::BACKEND_FILENAME);
                     
                     println!("Checking for backend sidecar at: {:?}", backend_path);
                     

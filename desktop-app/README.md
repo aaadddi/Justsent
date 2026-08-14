@@ -39,7 +39,6 @@ This script automatically:
 
 ### Build and Package App
 ```bash
-bun run build
-bun run tauri build
+bun run tauri:build
 ```
-This compiles the TypeScript code and produces optimized bundles in `dist/`, which Tauri packages into a macOS `.dmg` / `.app` bundle.
+This compiles the TypeScript code, builds optimized assets in `dist/`, and triggers Tauri to package the application into a native desktop installer.

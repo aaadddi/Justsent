@@ -43,25 +43,7 @@ export default function Header() {
             data-tauri-drag-region
             onPointerDown={startWindowDrag}
         >
-            {isMac ? (
-                <div className="titlebar-controls mac-controls">
-                    <button className="control-btn mac-close" onClick={handleClose} aria-label="Close">
-                        <svg width="6" height="6" viewBox="0 0 6 6">
-                            <path d="M1.5 1.5 L4.5 4.5 M4.5 1.5 L1.5 4.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
-                        </svg>
-                    </button>
-                    <button className="control-btn mac-minimize" onClick={handleMinimize} aria-label="Minimize">
-                        <svg width="6" height="1" viewBox="0 0 6 1">
-                            <line x1="0" y1="0.5" x2="6" y2="0.5" stroke="currentColor" strokeWidth="1"/>
-                        </svg>
-                    </button>
-                    <button className="control-btn mac-maximize" onClick={handleMaximize} aria-label="Maximize">
-                        <svg width="6" height="6" viewBox="0 0 6 6">
-                            <rect x="0.5" y="0.5" width="5" height="5" fill="none" stroke="currentColor" strokeWidth="1"/>
-                        </svg>
-                    </button>
-                </div>
-            ) : (
+            {!isMac && (
                 <div className="titlebar-controls win-controls">
                     <button className="control-btn win-minimize" onClick={handleMinimize} aria-label="Minimize">
                         <svg width="10" height="10" viewBox="0 0 10 10">
